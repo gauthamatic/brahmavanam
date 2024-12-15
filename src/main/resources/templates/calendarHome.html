@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brahmavanam</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .calendar-container {
+            margin-left: auto; /* Align calendar slightly towards right */
+            margin-right: 20px;
+        }
+        .calendar {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        .calendar th, .calendar td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: center;
+            vertical-align: top;
+        }
+        .calendar th {
+            background-color: #f4f4f4;
+        }
+        .calendar td {
+            height: 100px;
+            position: relative;
+        }
+        .calendar .blocked-event {
+            background-color: #ffcccc;
+            color: #990000;
+            font-size: 12px;
+            padding: 5px;
+            border-radius: 4px;
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            text-align: center;
+        }
+        .current-day {
+            background-color: #cce7ff;
+            font-weight: bold;
+        }
+        .month-title {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+<div class="calendar-container">
+    <div class="month-title" id="month-title"></div>
+    <table class="calendar" id="calendar">
+        <thead>
+        <tr>
+            <th>Sun</th>
+            <th>Mon</th>
+            <th>Tue</th>
+            <th>Wed</th>
+            <th>Thu</th>
+            <th>Fri</th>
+            <th>Sat</th>
+        </tr>
+        </thead>
+        <tbody id="calendar-body">
+        <!-- Calendar dates will be populated here by JavaScript -->
+        </tbody>
+    </table>
+</div>
+<script>
+    // Generate a calendar dynamically for the current month
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth(); // 0 = Jan, 11 = Dec
+    const currentDate = today.getDate();
+    const monthNames = [
+        "January", "February", "March", "April", "May",
+        "June", "July", "August", "September", "October", "November", "December"
+    ];
+
+    const monthTitle = document.getElementById("month-title");
+    const calendarBody = document.getElementById("calendar-body");
+
+    // Update month title
+    monthTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+    // Get first day and total days in the month
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    let date = 1;
+    for (let i = 0; i < 6; i++) {
+        // Create a new row
+        const row = document.createElement("tr");
+
+        for (let j = 0; j < 7; j++) {
+            const cell = document.createElement("td");
+            if (i === 0 && j < firstDay) {
+                // Empty cells before the first day of the month
+                cell.textContent = "";
+            } else if (date > daysInMonth) {
+                // Empty cells after the last day of the month
+                cell.textContent = "";
+            } else {
+                // Add the date to the cell
+                cell.textContent = date;
+                if (date === currentDate) {
+                    cell.classList.add("current-day");
+                }
+
+                // Example: Add blocked events
+                if ([5, 15, 25].includes(date)) { // Example blocked dates
+                    const eventDiv = document.createElement("div");
+                    eventDiv.classList.add("blocked-event");
+                    eventDiv.textContent = "Blocked Event";
+                    cell.appendChild(eventDiv);
+                }
+
+                date++;
+            }
+            row.appendChild(cell);
+        }
+        calendarBody.appendChild(row);
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BRAHMAVANAM</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            font-family: calibri;
+            display: flex;
+            justify-content: center; /* Center the title horizontally */
+            align-items: center;
+            position: relative; /* To allow login button positioning */
+            background-color: #f4f4f4;
+            padding: 10px 20px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 100;
+            font-size: 50px;
+        }
+        .login-button {
+            position: absolute;
+            right: 20px;
+            top: 10px;
+            background-color: #007BFF;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .login-button:hover {
+            background-color: #0056b3;
+        }
+        nav {
+            display: flex;
+            justify-content: space-evenly; /* Equal spacing between tabs */
+            background-color: #cce7ff; /* Pleasant blue background */
+            padding: 10px 0;
+        }
+        .tabs a {
+            text-decoration: none;
+            color: #333;
+            padding: 10px 20px;
+            background-color: #007BFF; /* Blue for tabs */
+            color: white;
+            border-radius: 5px;
+            flex: 1; /* Make tabs equally split */
+            text-align: center;
+            margin: 0 10px;
+        }
+        .tabs a:hover {
+            background-color: #0056b3; /* Darker blue on hover */
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>BRAHMAVANAM</h1>
+    <a href="/login" class="login-button">Login</a>
+</header>
+<nav>
+    <div class="tabs">
+        <a href="/namana">Namana</a>
+        <a href="/calendar">Calendar</a>
+    </div>
+</nav>
+</body>
+</html>
