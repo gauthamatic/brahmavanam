@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brahmavanam</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/rrule@2.6.4/dist/es5/rrule.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/rrule@6.1.15/index.global.min.js'></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,126 +17,143 @@
             justify-content: flex-start;
         }
         .calendar-container {
-            margin-left: auto; /* Align calendar slightly towards right */
+            margin-left: auto;
             margin-right: 20px;
-        }
-        .calendar {
-            border-collapse: collapse;
             width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
-        .calendar th, .calendar td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-            vertical-align: top;
+
+        .fc-toolbar {
+            background-color: #f0f0f0;
+            border-bottom: 1px solid #ddd;
         }
-        .calendar th {
-            background-color: #f4f4f4;
-        }
-        .calendar td {
-            height: 100px;
-            position: relative;
-        }
-        .calendar .blocked-event {
-            background-color: #ffcccc;
-            color: #990000;
-            font-size: 12px;
-            padding: 5px;
+        .fc-daygrid-event {
+            background-color: #4caf50;
+            color: white;
+            border: none;
             border-radius: 4px;
+        }
+        .fc-daygrid-event:hover {
+            background-color: #45a049;
+        }
+        .fc-day-today {
+            background-color: #e0f7fa !important;
+        }
+        .event-form {
+            display: none;
             position: absolute;
-            bottom: 5px;
-            right: 5px;
-            text-align: center;
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
         }
-        .current-day {
-            background-color: #cce7ff;
-            font-weight: bold;
-        }
-        .month-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 24px;
-            font-weight: bold;
+        .event-form:hover {
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            border-color: #aaa;
         }
     </style>
 </head>
 <body>
 <div class="calendar-container">
-    <div class="month-title" id="month-title"></div>
-    <table class="calendar" id="calendar">
-        <thead>
-        <tr>
-            <th>Sun</th>
-            <th>Mon</th>
-            <th>Tue</th>
-            <th>Wed</th>
-            <th>Thu</th>
-            <th>Fri</th>
-            <th>Sat</th>
-        </tr>
-        </thead>
-        <tbody id="calendar-body">
-        <!-- Calendar dates will be populated here by JavaScript -->
-        </tbody>
-    </table>
+    <div id='calendar'></div>
+</div>
+<div class="event-form" id="eventForm">
+    <h3>Add Event</h3>
+    <label for="eventTitle">Title:</label>
+    <input type="text" id="eventTitle" name="eventTitle"><br><br>
+    <button id="saveEventButton">Save Event</button>
+    <button id="cancelEventButton">Cancel</button>
 </div>
 <script>
-    // Generate a calendar dynamically for the current month
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0 = Jan, 11 = Dec
-    const currentDate = today.getDate();
-    const monthNames = [
-        "January", "February", "March", "April", "May",
-        "June", "July", "August", "September", "October", "November", "December"
-    ];
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var eventForm = document.getElementById('eventForm');
+        var saveEventButton = document.getElementById('saveEventButton');
+        var cancelEventButton = document.getElementById('cancelEventButton');
+        var selectedInfo = null;
 
-    const monthTitle = document.getElementById("month-title");
-    const calendarBody = document.getElementById("calendar-body");
+        // Fetch events from the server
+        fetch('/events')
+            .then(response => response.json())
+            .then(events => {
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                events: events,
+                selectable: true,
+                select: function(info) {
+                    var startDate = new Date(info.start);
+                    var endDate = new Date(info.end);
+                    var allowedDays = [0, 1, 4, 5]; // Monday, Tuesday, Friday & Saturday
+                  //var dayOfWeek = startDate.getUTCDay();
+                    var daysSelected = (endDate - startDate) / (1000 * 60 * 60 * 24);
 
-    // Update month title
-    monthTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                    if (daysSelected > 2) {
+                        alert('You can only block a maximum of 2 days.');
+                        calendar.unselect();
+                        return;
+                    }
 
-    // Get first day and total days in the month
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    if (!allowedDays.includes(startDate.getUTCDay()) || ([1,5].includes(startDate.getUTCDay()) && daysSelected > 1)) {
+                        alert('You can only block dates on Monday, Tuesday, Friday, and Saturday.');
+                        calendar.unselect();
+                        return;
+                    }
 
-    let date = 1;
-    for (let i = 0; i < 6; i++) {
-        // Create a new row
-        const row = document.createElement("tr");
+                    var eventsOnDay = calendar.getEvents().filter(event => {
+                        return event.start.getTime() === startDate.getTime();
+                    });
 
-        for (let j = 0; j < 7; j++) {
-            const cell = document.createElement("td");
-            if (i === 0 && j < firstDay) {
-                // Empty cells before the first day of the month
-                cell.textContent = "";
-            } else if (date > daysInMonth) {
-                // Empty cells after the last day of the month
-                cell.textContent = "";
-            } else {
-                // Add the date to the cell
-                cell.textContent = date;
-                if (date === currentDate) {
-                    cell.classList.add("current-day");
+                    if (eventsOnDay.length > 0) {
+                        alert('Only one booking is allowed per day.');
+                        calendar.unselect();
+                        return;
+                    }
+
+                    selectedInfo = info;
+                    var rect = info.jsEvent.target.getBoundingClientRect();
+                    eventForm.style.top = (rect.top - eventForm.offsetHeight) + 'px';
+                    eventForm.style.left = rect.left + 'px';
+                    eventForm.style.display = 'block';
+                    calendar.setOption('selectable', false);
+                    calendar.setOption('editable', false);
                 }
+            });
+            calendar.render();
 
-                // Example: Add blocked events
-                if ([5, 15, 25].includes(date)) { // Example blocked dates
-                    const eventDiv = document.createElement("div");
-                    eventDiv.classList.add("blocked-event");
-                    eventDiv.textContent = "Blocked Event";
-                    cell.appendChild(eventDiv);
+            saveEventButton.addEventListener('click', function() {
+                var eventTitle = document.getElementById('eventTitle').value;
+                if (eventTitle && selectedInfo) {
+                    calendar.addEvent({
+                        title: eventTitle,
+                        start: selectedInfo.start,
+                        end: selectedInfo.end,
+                        color: '#ffcccc',
+                        textColor: '#990000'
+                    });
+                    eventForm.style.display = 'none';
+                    selectedInfo = null;
+                    document.getElementById('eventTitle').value = '';
+                    calendar.setOption('selectable', true);
+                    calendar.setOption('editable', true);
+                } else {
+                    alert('Please enter an event title.');
                 }
+            });
 
-                date++;
-            }
-            row.appendChild(cell);
-        }
-        calendarBody.appendChild(row);
-    }
+            cancelEventButton.addEventListener('click', function() {
+                eventForm.style.display = 'none';
+                selectedInfo = null;
+                calendar.unselect();
+                calendar.setOption('selectable', true);
+                calendar.setOption('editable', true);
+            });
+        });
+    });
 </script>
 </body>
 </html>

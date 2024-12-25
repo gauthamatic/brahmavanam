@@ -1,11 +1,21 @@
 package com.brahmavanam.controller;
 
+import com.brahmavanam.model.Event;
+import com.brahmavanam.service.EventService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.view.RedirectView;
 
-@RestController
+import java.util.List;
+
+@Controller
 public class RequestController {
+
+    @Autowired
+    EventService eventService;
 
     @GetMapping("/namana")
     public RedirectView namana(){
@@ -16,6 +26,17 @@ public class RequestController {
     @GetMapping("/calendar")
     public String calendar(){
         return "calendarHome";
+    }
+
+    @GetMapping("/events")
+    @ResponseBody
+    public List<Event> events(){
+        return eventService.getAllEvents();
+    }
+
+    @PostMapping("/events")
+    public void saveEvents(){
+        eventService.saveEventDetails();
     }
 
 }
