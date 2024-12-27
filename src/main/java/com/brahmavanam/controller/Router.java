@@ -1,7 +1,7 @@
 package com.brahmavanam.controller;
 
-import com.brahmavanam.model.Event;
-import com.brahmavanam.service.EventService;
+import com.brahmavanam.calendar.model.Event;
+import com.brahmavanam.calendar.service.CalendarService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,14 +12,14 @@ import org.springframework.web.servlet.view.RedirectView;
 import java.util.List;
 
 @Controller
-public class RequestController {
+public class Router {
 
     @Autowired
-    EventService eventService;
+    CalendarService calendarService;
 
     @GetMapping("/namana")
     public RedirectView namana(){
-        String wordpressUrl = "https://brahmavanam.wordpress.com/%E0%B2%A8%E0%B2%AE%E0%B2%A8/"; // Replace with your WordPress page URL
+        String wordpressUrl = "https://brahmavanam.wordpress.com/%E0%B2%A8%E0%B2%AE%E0%B2%A8/";
         return new RedirectView(wordpressUrl);
     }
 
@@ -31,12 +31,12 @@ public class RequestController {
     @GetMapping("/events")
     @ResponseBody
     public List<Event> events(){
-        return eventService.getAllEvents();
+        return calendarService.getAllEvents();
     }
 
     @PostMapping("/events")
     public void saveEvents(){
-        eventService.saveEventDetails();
+        calendarService.saveEventDetails();
     }
 
 }
