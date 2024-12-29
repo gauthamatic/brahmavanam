@@ -127,22 +127,44 @@
             saveEventButton.addEventListener('click', function() {
                 var eventTitle = document.getElementById('eventTitle').value;
                 if (eventTitle && selectedInfo) {
-                    calendar.addEvent({
+                    var newEvent = {
                         title: eventTitle,
                         start: selectedInfo.start,
                         end: selectedInfo.end,
                         color: '#ffcccc',
                         textColor: '#990000'
-                    });
-                    eventForm.style.display = 'none';
-                    selectedInfo = null;
-                    document.getElementById('eventTitle').value = '';
-                    calendar.setOption('selectable', true);
-                    calendar.setOption('editable', true);
-                } else {
-                    alert('Please enter an event title.');
-                }
-            });
+                    };
+
+                        fetch('/events', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(newEvent)
+                        })
+                        .then(response => response.json())
+                        .then(savedEvent => {
+                            calendar.addEvent({
+                                title: savedEvent.title,
+                                start: savedEvent.start,
+                                end: savedEvent.end,
+                                color: savedEvent.color,
+                                textColor: savedEvent.textColor
+                            });
+                            eventForm.style.display = 'none';
+                            selectedInfo = null;
+                            document.getElementById('eventTitle').value = '';
+                            calendar.setOption('selectable', true);
+                            calendar.setOption('editable', true);
+                        })
+                        .catch(error => {
+                            console.error('Error saving event:', error);
+                            alert('Failed to save event. Please try again.');
+                        });
+                    } else {
+                        alert('Please enter an event title.');
+                    }
+                });
 
             cancelEventButton.addEventListener('click', function() {
                 eventForm.style.display = 'none';

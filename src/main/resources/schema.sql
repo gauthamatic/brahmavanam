@@ -9,6 +9,8 @@ CREATE TABLE rrule (
 CREATE TABLE event (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
+    dtstart VARCHAR(50),
+    dtend VARCHAR(50),
     rrule_id INT,
     color VARCHAR(50),
     text_color VARCHAR(50),
@@ -19,6 +21,8 @@ CREATE TABLE event (
 INSERT INTO rrule (freq, interval_value, byweekday, dtstart)
 VALUES ('weekly', 1, 'su', '2023-01-01T10:00:00');
 
+select @rrule_id := scope_identity();
+
 -- Get the last inserted id from rrule table
 INSERT INTO event (title, rrule_id, color, text_color)
-VALUES ('Open to All', (SELECT IDENTITY()), '#ffcccc', '#990000');
+VALUES ('Open to All', @rrule_id , '#ffcccc', '#990000');

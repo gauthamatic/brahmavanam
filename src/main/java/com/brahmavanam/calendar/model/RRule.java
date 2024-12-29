@@ -3,20 +3,20 @@ package com.brahmavanam.calendar.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.util.List;
+import java.io.Serializable;
 
 @Data
 @Entity
-public class RRule {
+public class RRule implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private int id;
     private String freq;
+    @Column(name = "interval_value")
     private int interval;
-    @ElementCollection
-    @CollectionTable(name = "rrule_byweekday", joinColumns = @JoinColumn(name = "rrule_id"))
-    @Column(name = "byweekday")
-    private List<String> byweekday;
+//    @ElementCollection
+//    @CollectionTable(name = "rrule_byweekday", joinColumns = @JoinColumn(name = "rrule_id"))
+//    @Column(name = "byweekday")
+    private String byweekday;
     private String dtstart;
-
 }
