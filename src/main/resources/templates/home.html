@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.w3.org/1999/xhtml">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,20 +15,25 @@
             display: flex;
             justify-content: center; /* Center the title horizontally */
             align-items: center;
-            position: relative; /* To allow login button positioning */
+            position: relative; /* Allows absolute positioning of login/logout section */
             background-color: #f4f4f4;
             padding: 10px 20px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
         }
         header h1 {
-            margin: 100;
+            margin: 0;
             font-size: 50px;
         }
-        .login-button {
+        .user-actions {
             position: absolute;
             right: 20px;
             top: 10px;
-            background-color: #007BFF;
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Adds spacing between username and buttons */
+        }
+        .login-button, .logout-button {
+            background-color: #4CAF50; /* Pleasant green */
             color: white;
             border: none;
             padding: 8px 16px;
@@ -37,8 +42,13 @@
             text-decoration: none;
             font-size: 14px;
         }
-        .login-button:hover {
-            background-color: #0056b3;
+        .logout-button:hover, .login-button:hover {
+            background-color: #45a049; /* Slightly darker green */
+        }
+        .username {
+            color: #333;
+            font-size: 16px; /* Slightly larger font for better visibility */
+            font-weight: bold;
         }
         nav {
             display: flex;
@@ -63,21 +73,24 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>BRAHMAVANAM</h1>
+<header>
+    <h1>BRAHMAVANAM</h1>
+    <!-- User actions container -->
+    <div class="user-actions">
         <!-- Show login button only if user is not logged in -->
         <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
-    </header>
-
-    <!-- Header with user's name in the top right -->
-    <div class="header">
-        <span class="username" th:if="${userName != null}" th:text="'Hello, ' + ${userName}"></span>
-    </div>
-    <nav>
-        <div class="tabs">
-            <a href="/namana">Namana</a>
-            <a href="/calendar">Calendar</a>
+        <!-- Show username and logout button only if user is logged in -->
+        <div th:if="${userName != null}" style="display: flex; align-items: center; gap: 10px;">
+            <span class="username" th:text="'Hello, ' + ${userName}"></span>
+            <a href="/logout" class="logout-button">Logout</a>
         </div>
-    </nav>
+    </div>
+</header>
+<nav>
+    <div class="tabs">
+        <a href="/namana">Namana</a>
+        <a href="/calendar">Calendar</a>
+    </div>
+</nav>
 </body>
 </html>

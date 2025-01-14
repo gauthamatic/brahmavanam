@@ -2,10 +2,15 @@ package com.brahmavanam.controller;
 
 import com.brahmavanam.calendar.dto.EventDTO;
 import com.brahmavanam.calendar.dto.RRuleDTO;
+import com.brahmavanam.calendar.dto.UserDTO;
 import com.brahmavanam.calendar.model.Event;
+import com.brahmavanam.calendar.model.RRule;
+import com.brahmavanam.calendar.model.User;
 import com.brahmavanam.calendar.service.CalendarService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +25,15 @@ public class Router {
 
     @Autowired
     CalendarService calendarService;
+
+    @GetMapping("/home")
+    public String homePage(HttpSession session, Model model) {
+        String userName = (String) session.getAttribute("user"); // Get user name from session
+        if (userName != null) {
+            model.addAttribute("userName", userName);
+        }
+        return "home"; // Return home page
+    }
 
     @GetMapping("/namana")
     public RedirectView namana(){
@@ -54,19 +68,31 @@ public class Router {
     private EventDTO convertToDTO(Event event) {
         EventDTO eventDTO = new EventDTO();
         eventDTO.setTitle(event.getTitle());
-        eventDTO.setStart(event.getDtstart());
-        eventDTO.setEnd(event.getDtend());
+        eventDTO.setStartDate(event.getStartDate());
+        eventDTO.setEndDate(event.getEndDate());
         eventDTO.setColor(event.getColor());
         eventDTO.setTextColor(event.getTextColor());
 
-        if (event.getRrule() != null) {
+        RRule rrule = event.getRrule();
+        if (rrule != null) {
             RRuleDTO rruleDTO = new RRuleDTO();
-            rruleDTO.setFreq(event.getRrule().getFreq());
-            rruleDTO.setInterval(event.getRrule().getInterval());
-            rruleDTO.setByweekday(event.getRrule().getByweekday().split(","));
-            rruleDTO.setDtstart(event.getRrule().getDtstart());
+            rruleDTO.setFreq(rrule.getFreq());
+            rruleDTO.setInterval(rrule.getInterval());
+            rruleDTO.setByweekday(rrule.getByweekday().split(","));
+            rruleDTO.setDtstart(rrule.getDtstart());
             eventDTO.setRrule(rruleDTO);
         }
+
+        User user = event.getUser();
+        if (user != null){
+            UserDTO userDTO = new UserDTO();
+            userDTO.setFirstName(user.getFirstname());
+            userDTO.setLastName(user.getLastname());
+            userDTO.setEmailId(user.getEmailId());
+            userDTO.setPassword(user.getPassword());
+            eventDTO.setUser(userDTO);
+        }
+
         System.out.println("Response EventDTO: " + eventDTO);
         return eventDTO;
     }
@@ -74,8 +100,8 @@ public class Router {
     private Event convertToEntity(EventDTO eventDTO) {
         Event event = new Event();
         event.setTitle(eventDTO.getTitle());
-        event.setDtstart(eventDTO.getStart());
-        event.setDtend(eventDTO.getEnd());
+        event.setStartDate(eventDTO.getStartDate());
+        event.setEndDate(eventDTO.getEndDate());
         event.setColor(eventDTO.getColor());
         event.setTextColor(eventDTO.getTextColor());
 
