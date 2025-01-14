@@ -13,11 +13,21 @@ public class UserService {
     private UserRepository userRepository;
 
     public boolean validateUser(String email, String password) {
-        User user = userRepository.findByEmailId(email);
-        if (user != null) {
-            // Compare passwords (hashing recommended)
-            return user.getPassword().equals(password);
+        User user = null;
+        try {
+            user = userRepository.findByEmailId(email).get();
+        } catch (Exception e) {
+            return false;
         }
-        return false;
+        // Compare passwords (hashing recommended)
+        return user.getPassword().equals(password);
+    }
+
+    public boolean checkIfUserExists(String email) {
+        return userRepository.findByEmailId(email).isPresent();
+    }
+
+    public void saveUser(User user) {
+        userRepository.save(user);
     }
 }
