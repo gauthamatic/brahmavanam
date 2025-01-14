@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.view.RedirectView;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -68,8 +69,8 @@ public class Router {
     private EventDTO convertToDTO(Event event) {
         EventDTO eventDTO = new EventDTO();
         eventDTO.setTitle(event.getTitle());
-        eventDTO.setStartDate(event.getStartDate());
-        eventDTO.setEndDate(event.getEndDate());
+        eventDTO.setStart(event.getStartDate().toString());
+        eventDTO.setEnd(event.getEndDate().toString());
         eventDTO.setColor(event.getColor());
         eventDTO.setTextColor(event.getTextColor());
 
@@ -100,8 +101,8 @@ public class Router {
     private Event convertToEntity(EventDTO eventDTO) {
         Event event = new Event();
         event.setTitle(eventDTO.getTitle());
-        event.setStartDate(eventDTO.getStartDate());
-        event.setEndDate(eventDTO.getEndDate());
+        event.setStartDate(LocalDate.parse(eventDTO.getStart().substring(0, 10)));
+        event.setEndDate(LocalDate.parse(eventDTO.getEnd().substring(0, 10)));
         event.setColor(eventDTO.getColor());
         event.setTextColor(eventDTO.getTextColor());
 

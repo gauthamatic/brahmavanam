@@ -84,11 +84,13 @@
                     right: 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
                 events: events,
+                timeZone: 'IST',
                 selectable: true,
+                editable: false, // Disable event editing
                 select: function(info) {
                     var startDate = new Date(info.start);
                     var endDate = new Date(info.end);
-                    var allowedDays = [0, 1, 4, 5]; // Monday, Tuesday, Friday & Saturday
+                    var allowedDays = [1, 2, 5, 6]; // Monday, Tuesday, Friday & Saturday
                     var daysSelected = (endDate - startDate) / (1000 * 60 * 60 * 24);
 
                     if (daysSelected > 2) {
@@ -97,7 +99,7 @@
                         return;
                     }
 
-                    if (!allowedDays.includes(startDate.getUTCDay()) || ([1,5].includes(startDate.getUTCDay()) && daysSelected > 1)) {
+                    if (!allowedDays.includes(startDate.getUTCDay()) || ([2,6].includes(startDate.getUTCDay()) && daysSelected > 1)) {
                         alert('You can only block dates on Monday, Tuesday, Friday, and Saturday.');
                         calendar.unselect();
                         return;
@@ -119,7 +121,18 @@
                     eventForm.style.left = rect.left + 'px';
                     eventForm.style.display = 'block';
                     calendar.setOption('selectable', false);
-                    calendar.setOption('editable', false);
+                },
+                eventClick: function(info) {
+                    if (confirm('Do you want to delete this event?')) {
+                        info.event.remove();
+                        // Optionally, delete the event from the server
+                        fetch('/events/' + info.event.id, {
+                            method: 'DELETE'
+                        }).catch(error => {
+                            console.error('Error deleting event:', error);
+                            alert('Failed to delete event. Please try again.');
+                        });
+                    }
                 }
             });
             calendar.render();
@@ -135,43 +148,42 @@
                         textColor: '#990000'
                     };
 
-                        fetch('/events', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(newEvent)
-                        })
-                        .then(response => response.json())
-                        .then(savedEvent => {
-                            calendar.addEvent({
-                                title: savedEvent.title,
-                                start: savedEvent.start,
-                                end: savedEvent.end,
-                                color: savedEvent.color,
-                                textColor: savedEvent.textColor
-                            });
-                            eventForm.style.display = 'none';
-                            selectedInfo = null;
-                            document.getElementById('eventTitle').value = '';
-                            calendar.setOption('selectable', true);
-                            calendar.setOption('editable', true);
-                        })
-                        .catch(error => {
-                            console.error('Error saving event:', error);
-                            alert('Failed to save event. Please try again.');
+                    fetch('/events', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(newEvent)
+                    })
+                    .then(response => response.json())
+                    .then(savedEvent => {
+                        calendar.addEvent({
+                            id: savedEvent.id,
+                            title: savedEvent.title,
+                            start: savedEvent.start,
+                            end: savedEvent.end,
+                            color: savedEvent.color,
+                            textColor: savedEvent.textColor
                         });
-                    } else {
-                        alert('Please enter an event title.');
-                    }
-                });
+                        eventForm.style.display = 'none';
+                        selectedInfo = null;
+                        document.getElementById('eventTitle').value = '';
+                        calendar.setOption('selectable', true);
+                    })
+                    .catch(error => {
+                        console.error('Error saving event:', error);
+                        alert('Failed to save event. Please try again.');
+                    });
+                } else {
+                    alert('Please enter an event title.');
+                }
+            });
 
             cancelEventButton.addEventListener('click', function() {
                 eventForm.style.display = 'none';
                 selectedInfo = null;
                 calendar.unselect();
                 calendar.setOption('selectable', true);
-                calendar.setOption('editable', true);
             });
         });
     });
