@@ -69,8 +69,8 @@ public class Router {
     private EventDTO convertToDTO(Event event) {
         EventDTO eventDTO = new EventDTO();
         eventDTO.setTitle(event.getTitle());
-        eventDTO.setStart(event.getStartDate().toString());
-        eventDTO.setEnd(event.getEndDate().toString());
+        eventDTO.setStart(event.getStartDate());
+        eventDTO.setEnd(event.getEndDate());
         eventDTO.setColor(event.getColor());
         eventDTO.setTextColor(event.getTextColor());
 
@@ -101,8 +101,8 @@ public class Router {
     private Event convertToEntity(EventDTO eventDTO) {
         Event event = new Event();
         event.setTitle(eventDTO.getTitle());
-        event.setStartDate(LocalDate.parse(eventDTO.getStart().substring(0, 10)));
-        event.setEndDate(LocalDate.parse(eventDTO.getEnd().substring(0, 10)));
+        event.setStartDate(eventDTO.getStart());
+        event.setEndDate(eventDTO.getEnd());
         event.setColor(eventDTO.getColor());
         event.setTextColor(eventDTO.getTextColor());
 

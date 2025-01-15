@@ -20,10 +20,10 @@ public class Event implements Serializable {
     private String title;
 
     @Column(name = "start_date")
-    private LocalDate startDate;
+    private String startDate;
 
     @Column(name = "end_date")
-    private LocalDate endDate;
+    private String endDate;
 
     @ManyToOne
     @JoinColumn(name = "rrule_id", referencedColumnName = "id", nullable = true) // Reference to RRule table
