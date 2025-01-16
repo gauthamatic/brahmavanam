@@ -11,6 +11,7 @@ import com.brahmavanam.calendar.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -83,14 +84,24 @@ public class Router {
     public EventDTO saveEvents(@RequestBody EventDTO eventDTO){
 
         log.info("Saving Event --> DTO: " + eventDTO);
-        return convertToDTO(calendarService.saveEventDetails(convertToEntity(eventDTO)));
+        EventDTO savedEventDTO = convertToDTO(calendarService.saveEventDetails(convertToEntity(eventDTO)));
+        log.info("Saved Event --> DTO: " + savedEventDTO);
+        return savedEventDTO;
     }
 
     @DeleteMapping("/events/{id}")
-    public ResponseEntity<Void> deleteEvent(@PathVariable String id){
+    public ResponseEntity<Void> deleteEvent(@PathVariable String id, HttpSession session){
+        UserDTO userDTO = getUser(session);
+        if(userDTO == null){
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         log.info("Router: Deleting event with id: {}", id);
-        calendarService.deleteEvent(Long.parseLong(id));
-        return ResponseEntity.noContent().build();
+        boolean deleted = calendarService.deleteEvent(Long.parseLong(id), userDTO.getId());
+        if (deleted) {
+            return ResponseEntity.ok().build();
+        } else {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
     }
 
     @GetMapping("/user")
@@ -134,6 +145,7 @@ public class Router {
         User user = event.getUser();
         if (user != null){
             UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
             userDTO.setFirstName(user.getFirstname());
             userDTO.setLastName(user.getLastname());
             userDTO.setEmailId(user.getEmailId());

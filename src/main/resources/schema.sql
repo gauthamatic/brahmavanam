@@ -35,7 +35,7 @@ select @rrule_id := scope_identity();
 
 -- Get the last inserted id from rrule table
 INSERT INTO event (title, rrule_id, color, text_color, start_date)
-VALUES ('Open to All', @rrule_id , '#ffcccc', '#990000', '2023-01-01');
+VALUES ('Open to All', @rrule_id , '#86f759', '#1b5d01', '2023-01-01');
 
 -- Insert into user table
 INSERT INTO users (firstname, lastname, email_id, password)

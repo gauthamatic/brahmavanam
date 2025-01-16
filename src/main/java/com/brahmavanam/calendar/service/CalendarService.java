@@ -6,10 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.time.format.DateTimeFormatter;
 
@@ -51,8 +49,14 @@ public class CalendarService {
         return events;
     }
 
-    public void deleteEvent(Long id) {
-        log.info("CalendarService: Deleting event with id: {}", id);
-        eventRepository.deleteById(id);
+    public boolean deleteEvent(Long eventId, int userDTOId) {
+        Event event = eventRepository.findById(eventId).orElse(null);
+        if (event != null && event.getUser().getId() == userDTOId) {
+            log.info("CalendarService: Deleting event with id: {}", eventId);
+            eventRepository.delete(event);
+            return true;
+        }
+        log.info("CalendarService: Deleting event with id: {} failed", eventId);
+        return false;
     }
 }
