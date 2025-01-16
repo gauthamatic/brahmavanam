@@ -114,6 +114,7 @@ public class Router {
 
     private EventDTO convertToDTO(Event event) {
         EventDTO eventDTO = new EventDTO();
+        eventDTO.setId(String.valueOf(event.getId()));
         eventDTO.setTitle(event.getTitle());
         eventDTO.setStart(event.getStartDate());
         eventDTO.setEnd(event.getEndDate());
@@ -140,7 +141,6 @@ public class Router {
             eventDTO.setUser(userDTO);
         }
 
-        System.out.println("Response EventDTO: " + eventDTO);
         return eventDTO;
     }
 
@@ -153,7 +153,6 @@ public class Router {
         event.setTextColor(eventDTO.getTextColor());
         event.setUser(userService.findUserById(eventDTO.getUser().getId()));
 
-        System.out.println("Event: " + event);
         return event;
     }
 
