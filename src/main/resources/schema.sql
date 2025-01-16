@@ -3,7 +3,7 @@ CREATE TABLE rrule (
     freq VARCHAR(50) NOT NULL,
     interval_value INT NOT NULL,
     byweekday VARCHAR(255),
-    start_date DATE NOT NULL
+    dtstart DATE NOT NULL
 );
 
 CREATE TABLE users (
@@ -28,14 +28,14 @@ CREATE TABLE event (
 );
 
 -- Insert into rrule table
-INSERT INTO rrule (freq, interval_value, byweekday, start_date)
+INSERT INTO rrule (freq, interval_value, byweekday, dtstart)
 VALUES ('weekly', 1, 'su', '2023-01-01');
 
 select @rrule_id := scope_identity();
 
 -- Get the last inserted id from rrule table
-INSERT INTO event (title, rrule_id, color, text_color)
-VALUES ('Open to All', @rrule_id , '#ffcccc', '#990000');
+INSERT INTO event (title, rrule_id, color, text_color, start_date)
+VALUES ('Open to All', @rrule_id , '#ffcccc', '#990000', '2023-01-01');
 
 -- Insert into user table
 INSERT INTO users (firstname, lastname, email_id, password)

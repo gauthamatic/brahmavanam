@@ -119,8 +119,7 @@
 <body>
 <header>
 
-        <a href="/home" class="home-button"><h1>BRAHMAVANAM</h1></a>
-
+    <a href="/home" class="home-button"><h1>BRAHMAVANAM</h1></a>
     <div class="user-actions">
         <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
         <div th:if="${userName != null}" style="display: flex; align-items: center; gap: 10px;">
@@ -131,7 +130,7 @@
 </header>
 
 <div class="calendar-container">
-    <div id='calendar'></div>
+    <div id='calendar' th:attr="data-date=${date != null ? date : ''}"></div>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
