@@ -76,6 +76,7 @@
     <p th:text="${success}"></p>
   </div>
   <form action="/login" method="post">
+    <input type="hidden" name="redirectUrl" th:value="${redirectUrl}">
     <input type="email" name="email" placeholder="Email ID" required>
     <input type="password" name="password" placeholder="Password" required>
     <button type="submit">Sign In</button>

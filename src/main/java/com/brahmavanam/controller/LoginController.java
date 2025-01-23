@@ -3,6 +3,7 @@ package com.brahmavanam.controller;
 import com.brahmavanam.calendar.model.User;
 import com.brahmavanam.calendar.service.UserService;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
+@Slf4j
 public class LoginController {
 
     @Autowired
@@ -22,9 +24,12 @@ public class LoginController {
     private String masterPassword;
 
     @GetMapping("/login")
-    public String login(Model model){
+    public String login(@RequestParam(required = false) String redirectUrl, Model model){
+        log.info("Get login request received. Redirect URL: " + redirectUrl);
+        model.addAttribute("redirectUrl", redirectUrl);
         return "login";
     }
+
 
     @GetMapping("/signup")
     public String signupPage() {
@@ -43,17 +48,38 @@ public class LoginController {
     }
 
     @PostMapping("/login")
-    public String login(@RequestParam String email, @RequestParam String password, Model model, HttpSession session) {
+    public String login(@RequestParam String email, @RequestParam String password,
+                        @RequestParam(required = false) String redirectUrl,
+                        Model model, HttpSession session) {
         boolean isValid = userService.validateUser(email, password);
         if (isValid) {
-            // Set user session
             session.setAttribute("user", email);
-            return "redirect:/home"; // Redirect to dashboard or home page
+            log.info("redirectUrl: " + redirectUrl);
+            if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                return "redirect:" + redirectUrl;
+            }
+            return "redirect:/home";
         } else {
             model.addAttribute("error", "Invalid email or password");
-            return "login"; // Redirect back to login page with an error message
+            return "login";
         }
     }
+//    @GetMapping("/loginFromCalendar")
+//    public String login(@RequestParam String email, @RequestParam String password,
+//                        @RequestParam(required = false) String redirectUrl,
+//                        Model model, HttpSession session) {
+//        boolean isValid = userService.validateUser(email, password);
+//        if (isValid) {
+//            session.setAttribute("user", email);
+//            if (redirectUrl != null && !redirectUrl.isEmpty()) {
+//                return "redirect:" + redirectUrl;
+//            }
+//            return "redirect:/calendar";
+//        } else {
+//            model.addAttribute("error", "Invalid email or password");
+//            return "login";
+//        }
+//    }
 
     @PostMapping("/signup")
     public String signup(
