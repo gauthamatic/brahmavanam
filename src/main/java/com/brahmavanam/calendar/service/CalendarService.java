@@ -24,8 +24,15 @@ public class CalendarService {
     }
 
     public Event saveEventDetails(Event event) {
+
         // Parse the start date of the new event
         LocalDateTime eventStartDate = LocalDateTime.parse(event.getStartDate().substring(0, 23), DateTimeFormatter.ISO_DATE_TIME);
+
+/*
+        if(eventStartDate.isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Event start date cannot be in the past.");
+        }
+*/
 
         // Fetch all events created by the user
         List<Event> userEvents = eventRepository.findByUserId(event.getUser().getId());
@@ -51,6 +58,16 @@ public class CalendarService {
 
     public boolean deleteEvent(Long eventId, int userDTOId) {
         Event event = eventRepository.findById(eventId).orElse(null);
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event not found.");
+        }
+
+
+        if(LocalDateTime.parse(event.getStartDate().substring(0, 23), DateTimeFormatter.ISO_DATE_TIME).isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("An event of past belongs to past. Can neither be modified nor deleted.");
+        }
+
         if (event != null && event.getUser().getId() == userDTOId) {
             log.info("CalendarService: Deleting event with id: {}", eventId);
             eventRepository.delete(event);

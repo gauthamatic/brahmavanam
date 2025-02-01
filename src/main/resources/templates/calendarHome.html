@@ -118,7 +118,6 @@
 
 <body>
 <header>
-
     <a href="/home" class="home-button"><h1>BRAHMAVANAM</h1></a>
     <div class="user-actions">
         <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
@@ -157,10 +156,24 @@
                     initialView: 'dayGridMonth',
                     initialDate: initialDate,
                     headerToolbar: {
-                        left: 'prev,next today',
+                        left: 'prevYear,prev,next,nextYear today',
                         center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                        right: 'SelectDate dayGridMonth,listMonth'
                     },
+                    customButtons: {
+                        SelectDate: {
+                            text: 'Select Date',
+                            click: function() {
+                                var selectedDate = prompt('Enter the date (YYYY-MM-DD):');
+                                if (selectedDate) {
+                                    calendar.gotoDate(selectedDate);
+                                } else {
+                                    alert('Please enter a valid date.');
+                                }
+                            }
+                        }
+                    },
+
                     events: events,
                     timeZone: 'IST',
                     selectable: true,
@@ -218,7 +231,14 @@
                             },
                             body: JSON.stringify(newEvent)
                         })
-                        .then(response => response.json())
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(errorResponse => {
+                                    throw new Error(errorResponse.error);
+                                    });
+                            }
+                            return response.json();
+                        })
                         .then(savedEvent => {
                             if (savedEvent.id) {
                                 var addedEvent =  calendar.addEvent(savedEvent);
@@ -226,12 +246,23 @@
                                 calendar.unselect();
                             } else {
                                 console.error('Error: Event ID is missing in the server response');
-                                alert('User must wait at least 90 days between events.');
+                                alert('Event ID is missing in the server response');
                             }
                         })
                         .catch(error => {
-                            console.error('Error saving event:', error);
-                            alert('Failed to save event: ' + error.message);
+                            if (error instanceof SyntaxError) {
+                                console.error('SyntaxError:', error.message);
+                                alert('Unexpected error occurred. Please try again.');
+                            } else {
+                                console.error('Error Object: ', error);
+                                if (error.message.includes('Event start date cannot be in the past.')) {
+                                    alert('Those who live in the past are not encouraged at Brahmavanam. Look ahead and select a future date.');
+                                } else if (error.message.includes('User must wait at least 90 days between events.')) {
+                                    alert('Meditate; Deepen you practices & wait at least 90 days between events.');
+                                } else {
+                                    alert('Failed to save event: ' + error.message);
+                                }
+                            }
                         });
                     },
                     eventClick: function(info) {
@@ -242,15 +273,24 @@
                                 if (response.ok) {
                                     info.event.remove();
                                 } else if (response.status === 401) {
-                                    alert('You must be logged in to delete events.');
+                                    alert('Confirm your identity. Please login!!');
+
+                                    window.location.href = '/login';
+                                    return;
                                 } else if (response.status === 403) {
-                                    alert('You can only delete events created by you.');
+                                    alert('Reap only what you sow!! Delete only what you create!!');
                                 } else {
-                                    alert('Failed to delete event. Please try again.');
+                                    return response.json().then(errorResponse => {
+                                        throw new Error(errorResponse.error);
+                                        });
                                 }
                             }).catch(error => {
                                 console.error('Error deleting event:', error);
-                                alert('Failed to delete event. Please try again.');
+                                if (error.message.includes('An event of past belongs to past')) {
+                                    alert('An event of past belongs to past. It can neither be modified nor deleted.');
+                                } else {
+                                alert('Failed to delete event.');
+                                }
                             });
                         }
                     }
