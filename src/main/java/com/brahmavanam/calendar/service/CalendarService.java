@@ -28,11 +28,10 @@ public class CalendarService {
         // Parse the start date of the new event
         LocalDateTime eventStartDate = LocalDateTime.parse(event.getStartDate().substring(0, 23), DateTimeFormatter.ISO_DATE_TIME);
 
-/*
+
         if(eventStartDate.isBefore(LocalDateTime.now())) {
             throw new IllegalArgumentException("Event start date cannot be in the past.");
         }
-*/
 
         // Fetch all events created by the user
         List<Event> userEvents = eventRepository.findByUserId(event.getUser().getId());
