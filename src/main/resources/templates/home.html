@@ -81,7 +81,7 @@
         <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
         <!-- Show username and logout button only if user is logged in -->
         <div th:if="${userName != null}" style="display: flex; align-items: center; gap: 10px;">
-            <span class="username" th:text="'Hello, ' + ${userName}"></span>
+            <span class="username" th:text="'Hello ' + ${userName}"></span>
             <a href="/logout" class="logout-button">Logout</a>
         </div>
     </div>

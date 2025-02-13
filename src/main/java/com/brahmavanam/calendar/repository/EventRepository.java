@@ -13,4 +13,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Event> findByUserIdAndStartDateAfter(int id, String ninetyDaysAgo);
 
     List<Event> findByUserId(int id);
+
+    List<Event> findByStartDate(String startDate);
 }

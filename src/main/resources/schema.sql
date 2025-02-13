@@ -37,6 +37,14 @@ select @rrule_id := scope_identity();
 INSERT INTO event (title, rrule_id, color, text_color, start_date)
 VALUES ('Open to All', @rrule_id , '#86f759', '#1b5d01', '2023-01-01');
 
+INSERT INTO rrule (freq, interval_value, byweekday, dtstart)
+VALUES ('weekly', 1, 'we,th', '2023-01-01');
+
+select @rrule_id := scope_identity();
+
+INSERT INTO event (title, rrule_id, color, text_color, start_date)
+VALUES ('No Bookings allowed', @rrule_id , '#eb8439', '#5d0101', '2023-01-01');
+
 -- Insert into user table
 INSERT INTO users (firstname, lastname, email_id, password)
 VALUES ('John', 'Doe', 'john.doe@example.com', 'password123');

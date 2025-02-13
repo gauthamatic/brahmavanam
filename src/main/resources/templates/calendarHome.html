@@ -122,7 +122,7 @@
     <div class="user-actions">
         <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
         <div th:if="${userName != null}" style="display: flex; align-items: center; gap: 10px;">
-            <span class="username" th:text="'Hello, ' + ${userName}"></span>
+            <span class="username" th:text="'Hello ' + ${userName}"></span>
             <a href="/logout" class="logout-button">Logout</a>
         </div>
     </div>
@@ -152,6 +152,7 @@
         fetch('/events')
             .then(response => response.json())
             .then(events => {
+                events.forEach(event => event.allDay = true);
                 var calendar = new FullCalendar.Calendar(calendarEl, {
                     initialView: 'dayGridMonth',
                     initialDate: initialDate,
@@ -162,7 +163,7 @@
                     },
                     customButtons: {
                         SelectDate: {
-                            text: 'Select Date',
+                            text: 'Go To Date',
                             click: function() {
                                 var selectedDate = prompt('Enter the date (YYYY-MM-DD):');
                                 if (selectedDate) {
@@ -210,7 +211,7 @@
                         });
 
                         if (eventsOnDay.length > 0) {
-                            alert('Only one booking is allowed per day.');
+                            alert('Truth is Non-dual!! A Booking in Brahmavanam should also be! Please select a date where there is no booking scheduled.');
                             calendar.unselect();
                             return;
                         }
@@ -219,6 +220,7 @@
                             title: loggedInUser.firstName + ' ' + loggedInUser.lastName,
                             start: info.start,
                             end: info.end,
+                            allDay: true,
                             color: '#ffcccc',
                             textColor: '#990000',
                             user: loggedInUser
@@ -241,6 +243,7 @@
                         })
                         .then(savedEvent => {
                             if (savedEvent.id) {
+                                savedEvent.allDay = true;
                                 var addedEvent =  calendar.addEvent(savedEvent);
                                 console.log('Event added:', addedEvent);
                                 calendar.unselect();
@@ -255,13 +258,7 @@
                                 alert('Unexpected error occurred. Please try again.');
                             } else {
                                 console.error('Error Object: ', error);
-                                if (error.message.includes('Event start date cannot be in the past.')) {
-                                    alert('Those who live in the past are not encouraged at Brahmavanam. Look ahead and select a future date.');
-                                } else if (error.message.includes('User must wait at least 90 days between events.')) {
-                                    alert('Meditate; Deepen you practices & wait at least 90 days between events.');
-                                } else {
-                                    alert('Failed to save event: ' + error.message);
-                                }
+                                alert(error.message);
                             }
                         });
                     },
@@ -287,7 +284,7 @@
                             }).catch(error => {
                                 console.error('Error deleting event:', error);
                                 if (error.message.includes('An event of past belongs to past')) {
-                                    alert('An event of past belongs to past. It can neither be modified nor deleted.');
+                                    alert(error.message);
                                 } else {
                                 alert('Failed to delete event.');
                                 }
