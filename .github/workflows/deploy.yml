@@ -51,13 +51,20 @@ jobs:
           echo "$EC2_SSH_KEY" > ec2_key.pem
           chmod 600 ec2_key.pem
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
-            # Kill existing process
-            pkill -f 'brahmavanam-0.0.17-SNAPSHOT.jar' || true
-            sleep 2
-            # Start new process
-            nohup java -Djava.net.preferIPv4Stack=true -Dspring.profiles.active=cloud \
-              -jar /home/ec2-user/brahmavanam/jar/brahmavanam-0.0.17-SNAPSHOT.jar \
-              > /home/ec2-user/brahmavanam/logs/app.log 2>&1 &
-            disown
+            # Restart the systemd service
+            sudo systemctl restart brahmavanam.service
+            
+            # Wait for service to start
+            sleep 5
+            
+            # Verify service is running
+            if ! sudo systemctl is-active --quiet brahmavanam.service; then
+              echo "ERROR: Service failed to start"
+              sudo systemctl status brahmavanam.service
+              exit 1
+            fi
+            
+            echo "Deployment successful!"
+            sudo systemctl status brahmavanam.service
           EOF
           rm -f ec2_key.pem
