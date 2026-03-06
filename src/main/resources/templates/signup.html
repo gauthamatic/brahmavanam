@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f4f4f9;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .signup-container {
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        text-align: center;
+    }
+    .signup-container h2 {
+        margin-bottom: 20px;
+        color: #333;
+    }
+    .signup-container input[type="text"],
+    .signup-container input[type="email"],
+    .signup-container input[type="password"] {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .signup-container button {
+        width: 100%;
+        padding: 10px;
+        margin: 10px 0;
+        background-color: #007BFF;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+    }
+    .signup-container button:hover {
+        background-color: #0056b3;
+    }
+    .signup-container .error {
+        color: red;
+        margin-bottom: 10px;
+    }
+    .signup-container .success {
+        color: green;
+        margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="signup-container">
+  <h2>Sign Up</h2>
+  <!-- Display error or success messages -->
+  <p th:if="${error}" class="error" th:text="${error}"></p>
+  <p th:if="${success}" class="success" th:text="${success}"></p>
+  <form action="/signup" method="post">
+    <input type="text" name="firstname" placeholder="First Name" required>
+    <input type="text" name="lastname" placeholder="Last Name" required>
+    <input type="email" name="email" placeholder="Email ID" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <input type="password" name="masterpassword" placeholder="Master Password" required>
+    <button type="submit">Sign Up</button>
+  </form>
+</div>
+</body>
+</html>

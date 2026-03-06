@@ -1,138 +1,300 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Brahmavanam</title>
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <script src='https://cdn.jsdelivr.net/npm/rrule@2.6.4/dist/es5/rrule.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/npm/@fullcalendar/rrule@6.1.15/index.global.min.js'></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: flex-start;
-        }
-        .calendar-container {
-            margin-left: auto; /* Align calendar slightly towards right */
-            margin-right: 20px;
-        }
-        .calendar {
-            border-collapse: collapse;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .calendar th, .calendar td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-            vertical-align: top;
-        }
-        .calendar th {
-            background-color: #f4f4f4;
-        }
-        .calendar td {
-            height: 100px;
-            position: relative;
-        }
-        .calendar .blocked-event {
-            background-color: #ffcccc;
-            color: #990000;
-            font-size: 12px;
-            padding: 5px;
-            border-radius: 4px;
-            position: absolute;
-            bottom: 5px;
-            right: 5px;
-            text-align: center;
-        }
-        .current-day {
-            background-color: #cce7ff;
-            font-weight: bold;
-        }
-        .month-title {
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 24px;
-            font-weight: bold;
-        }
-    </style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+        overflow-y: auto; /* Enable scrolling */
+    }
+    header {
+        background-color: #f4f4f4;
+        padding: 10px 20px;
+        box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+    }
+    header h1 {
+        margin: 0;
+        font-family: Helvetica, sans-serif;
+        font-size: 24px;
+        display: flex;
+        align-items: center;
+    }
+    .home-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 5px 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+        margin-left: 10px;
+    }
+    .home-button:hover {
+        background-color: #4CAF49;
+        color: white;
+    }
+    .user-actions {
+        position: absolute;
+        right: 50px;
+        top: 15px;
+        display: flex;
+        align-items: center;
+        gap: 15px; /* Adds spacing between username and buttons */
+
+    }
+    .login-button, .logout-button {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        text-decoration: none;
+        font-size: 14px;
+    }
+    .logout-button:hover, .login-button:hover {
+        background-color: #45a049;
+    }
+    .username {
+        color: #333;
+        font-size: 16px;
+        font-weight: bold;
+    }
+    .calendar-container {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        height: calc(100vh - 60px);
+        margin-top: 60px; /* Adjust for fixed header */
+        overflow-y: auto; /* Enable scrolling within the container */
+    }
+    #calendar {
+        width: 70%;
+        height: 100%;
+    }
+    .fc-toolbar {
+        background-color: #f0f0f0;
+        border-bottom: 1px solid #ddd;
+    }
+    .fc-daygrid-event {
+        background-color: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+    }
+    .fc-daygrid-event:hover {
+        background-color: #45a049;
+    }
+    .fc-day-today {
+        background-color: #e0f7fa !important;
+    }
+    .fc-day:hover {
+        background-color: #f0f0f0; /* Light grey background on hover */
+        cursor: pointer; /* Change cursor to pointer */
+    }
+</style>
 </head>
+
 <body>
+<header>
+    <a href="/home" class="home-button"><h1>BRAHMAVANAM</h1></a>
+    <div class="user-actions">
+        <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
+        <div th:if="${userName != null}" style="display: flex; align-items: center; gap: 10px;">
+            <span class="username" th:text="'Hello ' + ${userName}"></span>
+            <a href="/logout" class="logout-button">Logout</a>
+        </div>
+    </div>
+</header>
+
 <div class="calendar-container">
-    <div class="month-title" id="month-title"></div>
-    <table class="calendar" id="calendar">
-        <thead>
-        <tr>
-            <th>Sun</th>
-            <th>Mon</th>
-            <th>Tue</th>
-            <th>Wed</th>
-            <th>Thu</th>
-            <th>Fri</th>
-            <th>Sat</th>
-        </tr>
-        </thead>
-        <tbody id="calendar-body">
-        <!-- Calendar dates will be populated here by JavaScript -->
-        </tbody>
-    </table>
+    <div id='calendar' th:attr="data-date=${date != null ? date : ''}"></div>
 </div>
 <script>
-    // Generate a calendar dynamically for the current month
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth(); // 0 = Jan, 11 = Dec
-    const currentDate = today.getDate();
-    const monthNames = [
-        "January", "February", "March", "April", "May",
-        "June", "July", "August", "September", "October", "November", "December"
-    ];
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var loggedInUser = null;
+        var initialDate = calendarEl.getAttribute('data-date') || new Date().toISOString().split('T')[0];
 
-    const monthTitle = document.getElementById("month-title");
-    const calendarBody = document.getElementById("calendar-body");
+        // Fetch logged-in user information
+        fetch('/user')
+            .then(response => response.json())
+            .then(user => {
+                loggedInUser = user;
+                console.log('Logged-in user:', loggedInUser);
+            })
+            .catch(error => {
+                console.error('Error fetching user information:', error);
+            });
 
-    // Update month title
-    monthTitle.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+        // Fetch events from the server
+        fetch('/events')
+            .then(response => response.json())
+            .then(events => {
+                events.forEach(event => event.allDay = true);
+                var calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    initialDate: initialDate,
+                    headerToolbar: {
+                        left: 'prevYear,prev,next,nextYear today',
+                        center: 'title',
+                        right: 'SelectDate dayGridMonth,listMonth'
+                    },
+                    customButtons: {
+                        SelectDate: {
+                            text: 'Go To Date',
+                            click: function() {
+                                var selectedDate = prompt('Enter the date (YYYY-MM-DD):');
+                                if (selectedDate) {
+                                    calendar.gotoDate(selectedDate);
+                                } else {
+                                    alert('Please enter a valid date.');
+                                }
+                            }
+                        }
+                    },
 
-    // Get first day and total days in the month
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+                    events: events,
+                    timeZone: 'IST',
+                    selectable: true,
+                    editable: false, // Disable event editing
 
-    let date = 1;
-    for (let i = 0; i < 6; i++) {
-        // Create a new row
-        const row = document.createElement("tr");
+                    select: function(info) {
+                        if (!loggedInUser) {
+                            alert('You must be logged in to create an event.');
+                            calendar.unselect();
+                            var redirectUrl = '/calendar?date=' + info.startStr;
+                            window.location.href = '/login?redirectUrl=' + encodeURIComponent(redirectUrl);
+                            return;
+                        }
 
-        for (let j = 0; j < 7; j++) {
-            const cell = document.createElement("td");
-            if (i === 0 && j < firstDay) {
-                // Empty cells before the first day of the month
-                cell.textContent = "";
-            } else if (date > daysInMonth) {
-                // Empty cells after the last day of the month
-                cell.textContent = "";
-            } else {
-                // Add the date to the cell
-                cell.textContent = date;
-                if (date === currentDate) {
-                    cell.classList.add("current-day");
-                }
+                        var startDate = new Date(info.start);
+                        var endDate = new Date(info.end);
+                        var allowedDays = [1, 2, 5, 6]; // Monday, Tuesday, Friday & Saturday
+                        var daysSelected = (endDate - startDate) / (1000 * 60 * 60 * 24);
 
-                // Example: Add blocked events
-                if ([5, 15, 25].includes(date)) { // Example blocked dates
-                    const eventDiv = document.createElement("div");
-                    eventDiv.classList.add("blocked-event");
-                    eventDiv.textContent = "Blocked Event";
-                    cell.appendChild(eventDiv);
-                }
+                        if (daysSelected > 2) {
+                            alert('You can only block a maximum of 2 days.');
+                            calendar.unselect();
+                            return;
+                        }
 
-                date++;
-            }
-            row.appendChild(cell);
-        }
-        calendarBody.appendChild(row);
-    }
+                        if (!allowedDays.includes(startDate.getUTCDay()) || ([2,6].includes(startDate.getUTCDay()) && daysSelected > 1)) {
+                            alert('You can only block dates on Monday, Tuesday, Friday, and Saturday.');
+                            calendar.unselect();
+                            return;
+                        }
+
+                        var eventsOnDay = calendar.getEvents().filter(event => {
+                            return event.start.getTime() === startDate.getTime();
+                        });
+
+                        if (eventsOnDay.length > 0) {
+                            alert('Truth is Non-dual!! A Booking in Brahmavanam should also be! Please select a date where there is no booking scheduled.');
+                            calendar.unselect();
+                            return;
+                        }
+
+                        var newEvent = {
+                            title: loggedInUser.firstName + ' ' + loggedInUser.lastName,
+                            start: info.start,
+                            end: info.end,
+                            allDay: true,
+                            color: '#ffcccc',
+                            textColor: '#990000',
+                            user: loggedInUser
+                        };
+
+                        fetch('/events', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(newEvent)
+                        })
+                        .then(response => {
+                            if (!response.ok) {
+                                return response.json().then(errorResponse => {
+                                    throw new Error(errorResponse.error);
+                                    });
+                            }
+                            return response.json();
+                        })
+                        .then(savedEvent => {
+                            if (savedEvent.id) {
+                                savedEvent.allDay = true;
+                                var addedEvent =  calendar.addEvent(savedEvent);
+                                console.log('Event added:', addedEvent);
+                                calendar.unselect();
+                            } else {
+                                console.error('Error: Event ID is missing in the server response');
+                                alert('Event ID is missing in the server response');
+                            }
+                        })
+                        .catch(error => {
+                            if (error instanceof SyntaxError) {
+                                console.error('SyntaxError:', error.message);
+                                alert('Unexpected error occurred. Please try again.');
+                            } else {
+                                console.error('Error Object: ', error);
+                                alert(error.message);
+                            }
+                        });
+                    },
+                    eventClick: function(info) {
+                        if (confirm('Do you want to delete this event?')) {
+                            fetch('/events/' + info.event.id, {
+                                method: 'DELETE'
+                            }).then(response => {
+                                if (response.ok) {
+                                    info.event.remove();
+                                } else if (response.status === 401) {
+                                    alert('Confirm your identity. Please login!!');
+
+                                    window.location.href = '/login';
+                                    return;
+                                } else if (response.status === 403) {
+                                    alert('Reap only what you sow!! Delete only what you create!!');
+                                } else {
+                                    return response.json().then(errorResponse => {
+                                        throw new Error(errorResponse.error);
+                                        });
+                                }
+                            }).catch(error => {
+                                console.error('Error deleting event:', error);
+                                if (error.message.includes('An event of past belongs to past')) {
+                                    alert(error.message);
+                                } else {
+                                alert('Failed to delete event.');
+                                }
+                            });
+                        }
+                    }
+                });
+                calendar.render();
+            });
+    });
 </script>
 </body>
 </html>
