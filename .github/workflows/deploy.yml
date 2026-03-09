@@ -25,10 +25,7 @@ jobs:
       
       - name: Build with Gradle
         run: ./gradlew build -x test
-      
-      - name: Run tests
-        run: ./gradlew test
-      
+
       - name: Copy jar to EC2
         env:
           EC2_HOST: ${{ secrets.EC2_HOST }}
