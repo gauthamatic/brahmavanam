@@ -9,7 +9,11 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    
+
+    env:
+      APP_VERSION: 0.0.${{ github.run_number }}
+      JAR_NAME: brahmavanam-0.0.${{ github.run_number }}.jar
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -24,7 +28,14 @@ jobs:
         run: chmod +x gradlew
       
       - name: Build with Gradle
-        run: ./gradlew build -x test
+        run: ./gradlew build -x test -PappVersion=${{ env.APP_VERSION }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: brahmavanam-${{ env.APP_VERSION }}
+          path: build/libs/${{ env.JAR_NAME }}
+          retention-days: 90
 
       - name: Copy jar to EC2
         env:
@@ -35,8 +46,11 @@ jobs:
           echo "$EC2_SSH_KEY" > ec2_key.pem
           chmod 600 ec2_key.pem
           scp -i ec2_key.pem -o StrictHostKeyChecking=no \
-            build/libs/brahmavanam-0.0.17-SNAPSHOT.jar \
+            build/libs/${{ env.JAR_NAME }} \
             $EC2_USER@$EC2_HOST:/home/ec2-user/brahmavanam/jar/
+          # Update symlink to point to latest jar
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST \
+            "ln -sf /home/ec2-user/brahmavanam/jar/${{ env.JAR_NAME }} /home/ec2-user/brahmavanam/jar/brahmavanam.jar"
           rm -f ec2_key.pem
       
       - name: Restart application on EC2

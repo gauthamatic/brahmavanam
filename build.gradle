@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com'
-version = '0.0.17-SNAPSHOT'
+version = project.findProperty('appVersion') ?: '0.0.0-local'
 
 java {
 	toolchain {
