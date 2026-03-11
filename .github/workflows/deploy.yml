@@ -70,5 +70,7 @@ jobs:
               exit 1
             fi
             echo "Deployment successful!"
+            # Keep only the 2 most recent jars, delete the rest
+            ls -t /home/ec2-user/brahmavanam/jar/brahmavanam-*.jar | tail -n +3 | xargs -r rm -f
           EOF
           rm -f ec2_key.pem
