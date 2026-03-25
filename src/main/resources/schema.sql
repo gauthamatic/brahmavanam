@@ -48,3 +48,22 @@ VALUES ('No Bookings allowed', @rrule_id , '#eb8439', '#5d0101', '2023-01-01');
 -- Insert into user table
 INSERT INTO users (firstname, lastname, email_id, password)
 VALUES ('John', 'Doe', 'john.doe@example.com', 'password123');
+
+CREATE TABLE japa_log (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    malas INT NOT NULL,
+    intensity VARCHAR(20) NOT NULL,
+    duration_mins INT,
+    logged_at DATETIME NOT NULL,
+    notes TEXT,
+    CONSTRAINT fk_japa_log_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE japa_target (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    target_malas INT NOT NULL,
+    effective_from DATE NOT NULL,
+    CONSTRAINT fk_japa_target_user FOREIGN KEY (user_id) REFERENCES users(id)
+);
