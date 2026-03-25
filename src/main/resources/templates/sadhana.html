@@ -194,25 +194,26 @@
             <h2>🙏 Log Today's Japa</h2>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Malas</label>
-                    <input type="number" id="malas" min="1" value="1" style="width:80px;">
+                    <label>Malas *</label>
+                    <input type="number" id="malas" min="1" value="" style="width:80px;" required>
                 </div>
                 <div class="form-group">
-                    <label>Intensity</label>
-                    <select id="intensity">
+                    <label>Intensity *</label>
+                    <select id="intensity" required>
+                        <option value="">-- Select --</option>
                         <option value="DEEP">Deep</option>
                         <option value="FOCUSED">Focused</option>
-                        <option value="MODERATE" selected>Moderate</option>
+                        <option value="MODERATE">Moderate</option>
                         <option value="DISTRACTED">Distracted</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label>Duration (mins)</label>
-                    <input type="number" id="duration" min="1" style="width:90px;">
+                    <label>Duration (mins) *</label>
+                    <input type="number" id="duration" min="1" style="width:90px;" required>
                 </div>
                 <div class="form-group">
-                    <label>Time</label>
-                    <input type="datetime-local" id="loggedAt">
+                    <label>Time *</label>
+                    <input type="datetime-local" id="loggedAt" required>
                 </div>
                 <div class="form-group">
                     <label>Notes</label>
@@ -308,10 +309,13 @@
     let lineChartInstance = null;
     let dashboardData = null;
 
-    // Set default datetime to now
+    // Set default datetime to now and restrict max to now
     const now = new Date();
     now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    document.getElementById('loggedAt').value = now.toISOString().slice(0, 16);
+    const nowStr = now.toISOString().slice(0, 16);
+    const loggedAtInput = document.getElementById('loggedAt');
+    loggedAtInput.value = nowStr;
+    loggedAtInput.max = nowStr;
 
     // Load everything on page load
     window.onload = async () => {
@@ -330,7 +334,12 @@
 
     async function setTarget() {
         const val = parseInt(document.getElementById('targetInput').value);
-        if (!val || val < 1) return;
+        if (!val || val <= 0) {
+            document.getElementById('targetMsg').style.color = '#e74c3c';
+            document.getElementById('targetMsg').textContent = 'Target must be greater than 0.';
+            return;
+        }
+        document.getElementById('targetMsg').style.color = '#4CAF50';
         await fetch('/japa/target', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -343,11 +352,23 @@
 
     async function saveLog() {
         document.getElementById('logError').textContent = '';
+        const malas = parseInt(document.getElementById('malas').value);
+        const intensity = document.getElementById('intensity').value;
+        const duration = parseInt(document.getElementById('duration').value);
+        const loggedAt = document.getElementById('loggedAt').value;
+
+        if (!malas || malas <= 0 || !intensity || !duration || duration <= 0 || !loggedAt) {
+            document.getElementById('logError').textContent = 'All fields are required. Malas and Duration must be greater than 0.';
+            return;
+        }
+
+        const btn = document.querySelector('.btn-log');
+        btn.disabled = true;
         const body = {
-            malas: parseInt(document.getElementById('malas').value),
-            intensity: document.getElementById('intensity').value,
-            durationMins: parseInt(document.getElementById('duration').value) || null,
-            loggedAt: document.getElementById('loggedAt').value + ':00',
+            malas: malas,
+            intensity: intensity,
+            durationMins: duration,
+            loggedAt: loggedAt + ':00',
             notes: document.getElementById('notes').value || null
         };
         const res = await fetch('/japa/log', {
@@ -355,6 +376,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
         });
+        btn.disabled = false;
         if (res.ok) {
             document.getElementById('notes').value = '';
             await loadDashboard(7);

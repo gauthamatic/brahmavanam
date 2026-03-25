@@ -16,6 +16,7 @@ public class JapaTargetService {
     private JapaTargetRepository japaTargetRepository;
 
     public JapaTargetDTO setTarget(int userId, JapaTargetDTO dto) {
+        if (dto.getTargetMalas() <= 0) throw new IllegalArgumentException("Target malas must be greater than 0.");
         JapaTarget target = new JapaTarget();
         target.setUserId(userId);
         target.setTargetMalas(dto.getTargetMalas());

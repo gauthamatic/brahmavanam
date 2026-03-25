@@ -55,7 +55,7 @@ public class JapaLogController {
 
     private int getAuthenticatedUserId(HttpSession session) {
         String email = (String) session.getAttribute("user");
-        if (email == null) throw new IllegalStateException("Not authenticated.");
+        if (email == null) throw new SecurityException("Not authenticated.");
         return userService.findUserByUsername(email).getId();
     }
 }

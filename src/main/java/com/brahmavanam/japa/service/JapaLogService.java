@@ -20,10 +20,24 @@ public class JapaLogService {
     private JapaLogRepository japaLogRepository;
 
     public JapaLogDTO save(int userId, JapaLogDTO dto) {
+        if (dto.getMalas() <= 0) throw new IllegalArgumentException("Malas must be greater than 0.");
+        if (dto.getDurationMins() == null || dto.getDurationMins() <= 0) throw new IllegalArgumentException("Duration must be greater than 0.");
+        if (dto.getIntensity() == null) throw new IllegalArgumentException("Intensity is required.");
+
         JapaLog log = toEntity(dto);
         log.setUserId(userId);
         if (log.getLoggedAt() == null) {
             log.setLoggedAt(LocalDateTime.now());
+        }
+        if (log.getLoggedAt().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Log time cannot be in the future.");
+        }
+        // Prevent duplicate entry at the exact same timestamp
+        List<JapaLog> existing = japaLogRepository
+                .findByUserIdAndLoggedAtBetweenOrderByLoggedAtDesc(
+                        userId, log.getLoggedAt(), log.getLoggedAt());
+        if (!existing.isEmpty()) {
+            throw new IllegalArgumentException("An entry already exists for this exact time.");
         }
         return toDTO(japaLogRepository.save(log));
     }
@@ -54,7 +68,7 @@ public class JapaLogService {
         JapaLog existing = japaLogRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Log entry not found."));
         if (existing.getUserId() != userId) {
-            throw new IllegalArgumentException("You can only delete your own entries.");
+            throw new SecurityException("You can only delete your own entries.");
         }
         japaLogRepository.delete(existing);
     }
