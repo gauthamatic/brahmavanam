@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Sadhana — Brahmavanam</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { font-family: 'Segoe UI', sans-serif; background: #f5f0eb; color: #2d2d2d; }
+
+        header {
+            font-family: calibri;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background-color: #f4f4f4;
+            padding: 10px 20px;
+            box-shadow: 0px 2px 5px rgba(0,0,0,0.1);
+        }
+        header h1 { margin: 0; font-size: 50px; }
+        .user-actions {
+            position: absolute; right: 20px; top: 10px;
+            display: flex; align-items: center; gap: 15px;
+        }
+        .login-button, .logout-button {
+            background-color: #4CAF50; color: white; border: none;
+            padding: 8px 16px; border-radius: 5px; cursor: pointer;
+            text-decoration: none; font-size: 14px;
+        }
+        .username { color: #333; font-size: 16px; font-weight: bold; }
+
+        nav {
+            display: flex; justify-content: space-evenly;
+            background-color: #cce7ff; padding: 10px 0;
+        }
+        .tabs a {
+            text-decoration: none; padding: 10px 20px;
+            background-color: #007BFF; color: white;
+            border-radius: 5px; text-align: center; margin: 0 10px;
+        }
+        .tabs a:hover { background-color: #0056b3; }
+        .tabs a.active { background-color: #004a99; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+        /* Log Form */
+        .log-form {
+            background: white; border-radius: 12px; padding: 20px 24px;
+            margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .log-form h2 { font-size: 16px; color: #2c1a0e; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: #888; }
+        .form-group input, .form-group select, .form-group textarea {
+            border: 1px solid #ddd; border-radius: 8px;
+            padding: 8px 12px; font-size: 14px; outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #e8a045; }
+        .btn-log {
+            background: #e8a045; color: white; border: none;
+            border-radius: 8px; padding: 9px 24px;
+            font-size: 14px; cursor: pointer; font-weight: 600;
+        }
+        .btn-log:hover { background: #c97d20; }
+
+        /* Target bar */
+        .target-bar {
+            background: white; border-radius: 12px; padding: 14px 24px;
+            margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+        }
+        .target-bar label { font-size: 13px; color: #888; }
+        .target-bar input { width: 70px; border: 1px solid #ddd; border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+        .btn-target {
+            background: #2c1a0e; color: white; border: none;
+            border-radius: 8px; padding: 7px 18px; font-size: 13px; cursor: pointer;
+        }
+        #targetMsg { font-size: 12px; color: #4CAF50; }
+
+        /* Summary Cards */
+        .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .card {
+            background: white; border-radius: 12px; padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07); text-align: center;
+        }
+        .card .value { font-size: 32px; font-weight: 700; color: #2c1a0e; }
+        .card .label { font-size: 12px; color: #888; margin-top: 4px; }
+        .card .sub { font-size: 11px; color: #bbb; margin-top: 2px; }
+        .card.streak .value { color: #e8a045; }
+
+        /* Progress + Today */
+        .progress-section { display: grid; grid-template-columns: 220px 1fr; gap: 16px; margin-bottom: 24px; }
+        .progress-card {
+            background: white; border-radius: 12px; padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .progress-card h3 { font-size: 13px; color: #888; margin-bottom: 12px; }
+        .ring-container { position: relative; width: 130px; height: 130px; }
+        .ring-container svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #f0e8dc; stroke-width: 12; }
+        .ring-fill { fill: none; stroke: #e8a045; stroke-width: 12; stroke-linecap: round; stroke-dasharray: 339; stroke-dashoffset: 339; transition: stroke-dashoffset 1s; }
+        .ring-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .ring-text .big { font-size: 26px; font-weight: 700; color: #2c1a0e; }
+        .ring-text .small { font-size: 11px; color: #888; }
+        .progress-card .target-text { font-size: 12px; color: #aaa; margin-top: 10px; }
+
+        .today-logs { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .today-logs h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 12px; }
+        .log-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 0; border-bottom: 1px solid #f5f0eb; font-size: 13px;
+        }
+        .log-item:last-child { border-bottom: none; }
+        .log-item .time { color: #888; font-size: 12px; }
+        .log-item .actions { display: flex; gap: 8px; }
+        .btn-delete { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 13px; }
+        .intensity-badge { padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+        .DEEP { background: #d4edda; color: #155724; }
+        .FOCUSED { background: #cce5ff; color: #004085; }
+        .MODERATE { background: #fff3cd; color: #856404; }
+        .DISTRACTED { background: #f8d7da; color: #721c24; }
+        .no-logs { color: #aaa; font-size: 13px; padding: 10px 0; }
+
+        /* Charts */
+        .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .chart-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); }
+        .chart-card h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 8px; }
+        .range-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+        .range-tab { padding: 4px 12px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid #ddd; background: white; }
+        .range-tab.active { background: #2c1a0e; color: white; border-color: #2c1a0e; }
+
+        /* Heatmap */
+        .heatmap-card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.07); margin-bottom: 24px; }
+        .heatmap-card h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 16px; }
+        .heatmap { display: flex; gap: 3px; }
+        .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+        .heatmap-cell { width: 13px; height: 13px; border-radius: 2px; background: #f0e8dc; cursor: pointer; }
+        .heatmap-cell.l1 { background: #f5c98a; }
+        .heatmap-cell.l2 { background: #e8a045; }
+        .heatmap-cell.l3 { background: #c97d20; }
+        .heatmap-cell.l4 { background: #7a4a0a; }
+        .heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 11px; color: #aaa; }
+        .heatmap-legend .heatmap-cell { width: 11px; height: 11px; cursor: default; }
+
+        .error-msg { color: #e74c3c; font-size: 13px; margin-top: 8px; }
+        .not-logged-in { text-align: center; padding: 60px 20px; color: #888; }
+        .not-logged-in a { color: #e8a045; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>BRAHMAVANAM</h1>
+    <div class="user-actions">
+        <a href="/login" class="login-button" th:if="${userName == null}">Login</a>
+        <div th:if="${userName != null}" style="display:flex;align-items:center;gap:10px;">
+            <span class="username" th:text="'Hello ' + ${userName}"></span>
+            <a href="/logout" class="logout-button">Logout</a>
+        </div>
+    </div>
+</header>
+<nav>
+    <div class="tabs">
+        <a href="/namana">Namana</a>
+        <a href="/calendar">Calendar</a>
+        <a href="/sadhana" class="active">My Sadhana</a>
+    </div>
+</nav>
+
+<div class="container">
+
+    <!-- Not logged in -->
+    <div class="not-logged-in" th:if="${userName == null}">
+        <p>Please <a href="/login?redirectUrl=/sadhana">login</a> to view your Sadhana dashboard.</p>
+    </div>
+
+    <div th:if="${userName != null}">
+
+        <!-- Target Setting -->
+        <div class="target-bar">
+            <label>Daily Target (malas):</label>
+            <input type="number" id="targetInput" min="1" placeholder="e.g. 8">
+            <button class="btn-target" onclick="setTarget()">Set Target</button>
+            <span id="targetMsg"></span>
+        </div>
+
+        <!-- Log Entry Form -->
+        <div class="log-form">
+            <h2>🙏 Log Today's Japa</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Malas *</label>
+                    <input type="number" id="malas" min="1" value="" style="width:80px;" required>
+                </div>
+                <div class="form-group">
+                    <label>Intensity *</label>
+                    <select id="intensity" required>
+                        <option value="">-- Select --</option>
+                        <option value="DEEP">Deep</option>
+                        <option value="FOCUSED">Focused</option>
+                        <option value="MODERATE">Moderate</option>
+                        <option value="DISTRACTED">Distracted</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration (mins) *</label>
+                    <input type="number" id="duration" min="1" style="width:90px;" required>
+                </div>
+                <div class="form-group">
+                    <label>Time *</label>
+                    <input type="datetime-local" id="loggedAt" required>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <input type="text" id="notes" placeholder="Optional reflections..." style="width:220px;">
+                </div>
+                <button class="btn-log" onclick="saveLog()">+ Log</button>
+            </div>
+            <div class="error-msg" id="logError"></div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="cards">
+            <div class="card streak">
+                <div style="font-size:28px;">🔥</div>
+                <div class="value" id="currentStreak">—</div>
+                <div class="label">Day Streak</div>
+                <div class="sub" id="longestStreak">Longest: —</div>
+            </div>
+            <div class="card">
+                <div class="value" id="weeklyMalas">—</div>
+                <div class="label">This Week (malas)</div>
+            </div>
+            <div class="card">
+                <div class="value" id="monthlyMalas">—</div>
+                <div class="label">This Month (malas)</div>
+            </div>
+            <div class="card">
+                <div class="value" id="allTimeMalas">—</div>
+                <div class="label">All Time (malas)</div>
+                <div class="sub" id="allTimeReps"></div>
+            </div>
+        </div>
+
+        <!-- Progress Ring + Today's Logs -->
+        <div class="progress-section">
+            <div class="progress-card">
+                <h3>Today's Progress</h3>
+                <div class="ring-container">
+                    <svg width="130" height="130" viewBox="0 0 120 120">
+                        <circle class="ring-bg" cx="60" cy="60" r="54"/>
+                        <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="54"/>
+                    </svg>
+                    <div class="ring-text">
+                        <div class="big" id="todayMalas">—</div>
+                        <div class="small" id="todayTarget">malas</div>
+                    </div>
+                </div>
+                <div class="target-text" id="targetText"></div>
+            </div>
+
+            <div class="today-logs">
+                <h3>Today's Sessions</h3>
+                <div id="todayLogsList"><div class="no-logs">No sessions logged today.</div></div>
+            </div>
+        </div>
+
+        <!-- Charts -->
+        <div class="charts">
+            <div class="chart-card">
+                <h3>Daily Malas</h3>
+                <div class="range-tabs">
+                    <button class="range-tab active" onclick="switchBarRange(7, this)">7 days</button>
+                    <button class="range-tab" onclick="switchBarRange(30, this)">30 days</button>
+                </div>
+                <canvas id="barChart" height="160"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Intensity Trend</h3>
+                <canvas id="lineChart" height="160"></canvas>
+            </div>
+        </div>
+
+        <!-- Heatmap -->
+        <div class="heatmap-card">
+            <h3>Consistency — Last 6 Months</h3>
+            <div class="heatmap" id="heatmap"></div>
+            <div class="heatmap-legend">
+                Less
+                <div class="heatmap-cell"></div>
+                <div class="heatmap-cell l1"></div>
+                <div class="heatmap-cell l2"></div>
+                <div class="heatmap-cell l3"></div>
+                <div class="heatmap-cell l4"></div>
+                More
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    let barChartInstance = null;
+    let lineChartInstance = null;
+    let dashboardData = null;
+
+    // Set default datetime to now and restrict max to now
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    const nowStr = now.toISOString().slice(0, 16);
+    const loggedAtInput = document.getElementById('loggedAt');
+    loggedAtInput.value = nowStr;
+    loggedAtInput.max = nowStr;
+
+    // Load everything on page load
+    window.onload = async () => {
+        await loadTarget();
+        await loadDashboard(7);
+        await loadTodayLogs();
+    };
+
+    async function loadTarget() {
+        const res = await fetch('/japa/target');
+        if (res.ok) {
+            const data = await res.json();
+            document.getElementById('targetInput').value = data.targetMalas;
+        }
+    }
+
+    async function setTarget() {
+        const val = parseInt(document.getElementById('targetInput').value);
+        if (!val || val <= 0) {
+            document.getElementById('targetMsg').style.color = '#e74c3c';
+            document.getElementById('targetMsg').textContent = 'Target must be greater than 0.';
+            return;
+        }
+        document.getElementById('targetMsg').style.color = '#4CAF50';
+        await fetch('/japa/target', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetMalas: val })
+        });
+        document.getElementById('targetMsg').textContent = 'Target updated!';
+        setTimeout(() => document.getElementById('targetMsg').textContent = '', 2000);
+        await loadTarget();
+        await loadDashboard(7);
+    }
+
+    async function saveLog() {
+        document.getElementById('logError').textContent = '';
+        const malas = parseInt(document.getElementById('malas').value);
+        const intensity = document.getElementById('intensity').value;
+        const duration = parseInt(document.getElementById('duration').value);
+        const loggedAt = document.getElementById('loggedAt').value;
+
+        if (!malas || malas <= 0) {
+            document.getElementById('logError').textContent = 'Please enter a valid number of Malas (greater than 0).';
+            return;
+        }
+        if (!intensity) {
+            document.getElementById('logError').textContent = 'Please select Intensity.';
+            return;
+        }
+        if (!duration || duration <= 0) {
+            document.getElementById('logError').textContent = 'Please enter a valid Duration (greater than 0).';
+            return;
+        }
+        if (!loggedAt) {
+            document.getElementById('logError').textContent = 'Please select a Time.';
+            return;
+        }
+
+        const btn = document.querySelector('.btn-log');
+        btn.disabled = true;
+        const body = {
+            malas: malas,
+            intensity: intensity,
+            durationMins: duration,
+            loggedAt: loggedAt + ':00',
+            notes: document.getElementById('notes').value || null
+        };
+        const res = await fetch('/japa/log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        btn.disabled = false;
+        if (res.ok) {
+            document.getElementById('notes').value = '';
+            await loadDashboard(7);
+            await loadTodayLogs();
+        } else {
+            const err = await res.json();
+            document.getElementById('logError').textContent = err.error || 'Failed to save.';
+        }
+    }
+
+    async function deleteLog(id) {
+        await fetch('/japa/log/' + id, { method: 'DELETE' });
+        await loadDashboard(7);
+        await loadTodayLogs();
+    }
+
+    async function loadTodayLogs() {
+        const today = new Date().toISOString().slice(0, 10);
+        const res = await fetch('/japa/log?date=' + today);
+        const logs = await res.json();
+        const container = document.getElementById('todayLogsList');
+        if (!logs.length) {
+            container.innerHTML = '<div class="no-logs">No sessions logged today.</div>';
+            return;
+        }
+        container.innerHTML = logs.map(l => `
+            <div class="log-item">
+                <div>
+                    <strong>${l.malas} mala${l.malas > 1 ? 's' : ''}</strong>
+                    ${l.durationMins ? ' &nbsp;·&nbsp; ' + l.durationMins + ' mins' : ''}
+                    ${l.notes ? ' &nbsp;·&nbsp; ' + l.notes : ''}
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="intensity-badge ${l.intensity}">${l.intensity}</span>
+                    <span class="time">${formatTime(l.loggedAt)}</span>
+                    <button class="btn-delete" onclick="deleteLog(${l.id})">✕</button>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    async function loadDashboard(days) {
+        const res = await fetch('/japa/dashboard?days=' + days);
+        dashboardData = await res.json();
+        renderDashboard(dashboardData, days);
+    }
+
+    function renderDashboard(data, days) {
+        // Cards
+        document.getElementById('currentStreak').textContent = data.currentStreak;
+        document.getElementById('longestStreak').textContent = 'Longest: ' + data.longestStreak + ' days';
+        document.getElementById('weeklyMalas').textContent = data.weeklyMalas;
+        document.getElementById('monthlyMalas').textContent = data.monthlyMalas;
+        document.getElementById('allTimeMalas').textContent = data.allTimeMalas.toLocaleString();
+        document.getElementById('allTimeReps').textContent = '= ' + (data.allTimeMalas * 108).toLocaleString() + ' repetitions';
+
+        // Progress ring
+        document.getElementById('todayMalas').textContent = data.todayMalas;
+        if (data.todayTarget) {
+            document.getElementById('todayTarget').textContent = 'of ' + data.todayTarget + ' malas';
+            document.getElementById('targetText').textContent = 'Daily target: ' + data.todayTarget + ' malas';
+            const pct = Math.min(data.todayMalas / data.todayTarget, 1);
+            document.getElementById('ringFill').style.strokeDashoffset = 339 - (339 * pct);
+        } else {
+            document.getElementById('todayTarget').textContent = 'malas today';
+            document.getElementById('targetText').textContent = 'No target set';
+            document.getElementById('ringFill').style.strokeDashoffset = data.todayMalas > 0 ? 0 : 339;
+        }
+
+        // Bar chart
+        if (barChartInstance) barChartInstance.destroy();
+        barChartInstance = new Chart(document.getElementById('barChart'), {
+            type: 'bar',
+            data: {
+                labels: data.barChart.map(d => formatDate(d.date)),
+                datasets: [{ data: data.barChart.map(d => d.malas), backgroundColor: '#e8a045', borderRadius: 6 }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: '#f5f0eb' } },
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }
+                }
+            }
+        });
+
+        // Line chart
+        if (lineChartInstance) lineChartInstance.destroy();
+        const intensityLabels = { 0: '', 1: 'Distracted', 2: 'Moderate', 3: 'Focused', 4: 'Deep' };
+        lineChartInstance = new Chart(document.getElementById('lineChart'), {
+            type: 'line',
+            data: {
+                labels: data.lineChart.map(d => formatDate(d.date)),
+                datasets: [{
+                    data: data.lineChart.map(d => d.avgIntensity),
+                    borderColor: '#c97d20',
+                    backgroundColor: 'rgba(232,160,69,0.1)',
+                    fill: true, tension: 0.4,
+                    pointBackgroundColor: '#e8a045'
+                }]
+            },
+            options: {
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        min: 0, max: 4,
+                        ticks: { callback: v => intensityLabels[v] || '' },
+                        grid: { color: '#f5f0eb' }
+                    },
+                    x: { grid: { display: false }, ticks: { maxTicksLimit: 7 } }
+                }
+            }
+        });
+
+        // Heatmap
+        renderHeatmap(data.heatmap);
+    }
+
+    function renderHeatmap(heatmapData) {
+        const container = document.getElementById('heatmap');
+        container.innerHTML = '';
+        const today = new Date();
+        const start = new Date(today);
+        start.setMonth(start.getMonth() - 6);
+        // Align to Sunday
+        start.setDate(start.getDate() - start.getDay());
+
+        const maxMalas = Math.max(...Object.values(heatmapData), 1);
+
+        let col = null;
+        let cursor = new Date(start);
+        while (cursor <= today) {
+            if (cursor.getDay() === 0) {
+                col = document.createElement('div');
+                col.className = 'heatmap-col';
+                container.appendChild(col);
+            }
+            const dateStr = cursor.toISOString().slice(0, 10);
+            const malas = heatmapData[dateStr] || 0;
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell' + (malas === 0 ? '' :
+                malas <= maxMalas * 0.25 ? ' l1' :
+                malas <= maxMalas * 0.5 ? ' l2' :
+                malas <= maxMalas * 0.75 ? ' l3' : ' l4');
+            cell.title = dateStr + ': ' + malas + ' malas';
+            col.appendChild(cell);
+            cursor.setDate(cursor.getDate() + 1);
+        }
+    }
+
+    async function switchBarRange(days, btn) {
+        document.querySelectorAll('.range-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        await loadDashboard(days);
+    }
+
+    function formatDate(dateStr) {
+        const d = new Date(dateStr);
+        return (d.getMonth() + 1) + '/' + d.getDate();
+    }
+
+    function formatTime(dateTimeStr) {
+        const d = new Date(dateTimeStr);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+</script>
+</body>
+</html>

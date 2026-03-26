@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Japa Dashboard — Brahmavanam</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f0eb;
+            color: #2d2d2d;
+        }
+
+        header {
+            background: #2c1a0e;
+            color: #f5e6c8;
+            padding: 14px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { font-size: 22px; letter-spacing: 2px; }
+        header span { font-size: 14px; opacity: 0.8; }
+
+        nav {
+            background: #3d2510;
+            display: flex;
+            gap: 4px;
+            padding: 0 30px;
+        }
+        nav a {
+            color: #f5e6c8;
+            text-decoration: none;
+            padding: 10px 18px;
+            font-size: 14px;
+            opacity: 0.7;
+        }
+        nav a.active { opacity: 1; border-bottom: 2px solid #e8a045; }
+
+        .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+        /* Log Entry Form */
+        .log-form {
+            background: white;
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .log-form h2 { font-size: 16px; color: #2c1a0e; margin-bottom: 16px; }
+        .form-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 12px; color: #888; }
+        .form-group input, .form-group select, .form-group textarea {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #e8a045; }
+        .btn-log {
+            background: #e8a045;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 9px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Summary Cards */
+        .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            text-align: center;
+        }
+        .card .value { font-size: 32px; font-weight: 700; color: #2c1a0e; }
+        .card .label { font-size: 12px; color: #888; margin-top: 4px; }
+        .card .sub { font-size: 11px; color: #bbb; margin-top: 2px; }
+        .card.streak .value { color: #e8a045; }
+        .card.streak .flame { font-size: 28px; }
+
+        /* Progress Ring */
+        .progress-section {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .progress-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .progress-card h3 { font-size: 13px; color: #888; margin-bottom: 12px; }
+        .ring-container { position: relative; width: 130px; height: 130px; }
+        .ring-container svg { transform: rotate(-90deg); }
+        .ring-bg { fill: none; stroke: #f0e8dc; stroke-width: 12; }
+        .ring-fill { fill: none; stroke: #e8a045; stroke-width: 12; stroke-linecap: round;
+            stroke-dasharray: 339; stroke-dashoffset: 85; transition: stroke-dashoffset 1s; }
+        .ring-text {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        .ring-text .big { font-size: 26px; font-weight: 700; color: #2c1a0e; }
+        .ring-text .small { font-size: 11px; color: #888; }
+        .progress-card .target-text { font-size: 12px; color: #aaa; margin-top: 10px; }
+
+        /* Today's log list */
+        .today-logs {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .today-logs h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 12px; }
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f5f0eb;
+            font-size: 13px;
+        }
+        .log-item:last-child { border-bottom: none; }
+        .log-item .time { color: #888; font-size: 12px; }
+        .intensity-badge {
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .DEEP { background: #d4edda; color: #155724; }
+        .FOCUSED { background: #cce5ff; color: #004085; }
+        .MODERATE { background: #fff3cd; color: #856404; }
+        .DISTRACTED { background: #f8d7da; color: #721c24; }
+
+        /* Charts */
+        .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .chart-card h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 16px; }
+        .range-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
+        .range-tab {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            border: 1px solid #ddd;
+            background: white;
+        }
+        .range-tab.active { background: #2c1a0e; color: white; border-color: #2c1a0e; }
+
+        /* Heatmap */
+        .heatmap-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            margin-bottom: 24px;
+        }
+        .heatmap-card h3 { font-size: 14px; color: #2c1a0e; margin-bottom: 16px; }
+        .heatmap { display: flex; gap: 3px; }
+        .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+        .heatmap-cell {
+            width: 13px; height: 13px;
+            border-radius: 2px;
+            background: #f0e8dc;
+        }
+        .heatmap-cell.l1 { background: #f5c98a; }
+        .heatmap-cell.l2 { background: #e8a045; }
+        .heatmap-cell.l3 { background: #c97d20; }
+        .heatmap-cell.l4 { background: #7a4a0a; }
+        .heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 11px; color: #aaa; }
+        .heatmap-legend .heatmap-cell { width: 11px; height: 11px; }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>BRAHMAVANAM</h1>
+    <span>Hello, Gowtham &nbsp;|&nbsp; <a href="#" style="color:#e8a045;">Logout</a></span>
+</header>
+<nav>
+    <a href="#">Home</a>
+    <a href="#" class="active">My Sadhana</a>
+    <a href="#">Calendar</a>
+</nav>
+
+<div class="container">
+
+    <!-- Log Entry Form -->
+    <div class="log-form">
+        <h2>🙏 Log Today's Japa</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Malas</label>
+                <input type="number" value="4" min="1" style="width:80px;">
+            </div>
+            <div class="form-group">
+                <label>Intensity</label>
+                <select>
+                    <option>DEEP</option>
+                    <option>FOCUSED</option>
+                    <option selected>MODERATE</option>
+                    <option>DISTRACTED</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Duration (mins)</label>
+                <input type="number" value="45" style="width:90px;">
+            </div>
+            <div class="form-group">
+                <label>Time</label>
+                <input type="time" value="06:30">
+            </div>
+            <div class="form-group">
+                <label>Notes</label>
+                <input type="text" placeholder="Optional reflections..." style="width:220px;">
+            </div>
+            <button class="btn-log">+ Log</button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="cards">
+        <div class="card streak">
+            <div class="flame">🔥</div>
+            <div class="value">21</div>
+            <div class="label">Day Streak</div>
+            <div class="sub">Longest: 45 days</div>
+        </div>
+        <div class="card">
+            <div class="value">47</div>
+            <div class="label">This Week (malas)</div>
+            <div class="sub">↑ 12% vs last week</div>
+        </div>
+        <div class="card">
+            <div class="value">184</div>
+            <div class="label">This Month (malas)</div>
+            <div class="sub">March 2026</div>
+        </div>
+        <div class="card">
+            <div class="value">1,240</div>
+            <div class="label">All Time (malas)</div>
+            <div class="sub">= 133,920 repetitions</div>
+        </div>
+    </div>
+
+    <!-- Progress Ring + Today's Logs -->
+    <div class="progress-section">
+        <div class="progress-card">
+            <h3>Today's Progress</h3>
+            <div class="ring-container">
+                <svg width="130" height="130" viewBox="0 0 120 120">
+                    <circle class="ring-bg" cx="60" cy="60" r="54"/>
+                    <circle class="ring-fill" cx="60" cy="60" r="54"/>
+                </svg>
+                <div class="ring-text">
+                    <div class="big">6</div>
+                    <div class="small">of 8 malas</div>
+                </div>
+            </div>
+            <div class="target-text">Daily target: 8 malas</div>
+        </div>
+
+        <div class="today-logs">
+            <h3>Today's Sessions</h3>
+            <div class="log-item">
+                <div>
+                    <strong>4 malas</strong> &nbsp;·&nbsp; 45 mins &nbsp;·&nbsp; Morning puja
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="intensity-badge DEEP">DEEP</span>
+                    <span class="time">06:30 AM</span>
+                </div>
+            </div>
+            <div class="log-item">
+                <div>
+                    <strong>2 malas</strong> &nbsp;·&nbsp; 20 mins &nbsp;·&nbsp; Quick session before work
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                    <span class="intensity-badge MODERATE">MODERATE</span>
+                    <span class="time">08:15 AM</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="charts">
+        <div class="chart-card">
+            <h3>Daily Malas</h3>
+            <div class="range-tabs">
+                <button class="range-tab active">7 days</button>
+                <button class="range-tab">30 days</button>
+            </div>
+            <canvas id="barChart" height="160"></canvas>
+        </div>
+        <div class="chart-card">
+            <h3>Intensity Trend</h3>
+            <div class="range-tabs">
+                <button class="range-tab active">30 days</button>
+                <button class="range-tab">90 days</button>
+            </div>
+            <canvas id="lineChart" height="160"></canvas>
+        </div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="heatmap-card">
+        <h3>Consistency — Last 6 Months</h3>
+        <div class="heatmap" id="heatmap"></div>
+        <div class="heatmap-legend">
+            Less
+            <div class="heatmap-cell"></div>
+            <div class="heatmap-cell l1"></div>
+            <div class="heatmap-cell l2"></div>
+            <div class="heatmap-cell l3"></div>
+            <div class="heatmap-cell l4"></div>
+            More
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Bar Chart
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                data: [8, 6, 8, 4, 8, 10, 6],
+                backgroundColor: '#e8a045',
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, grid: { color: '#f5f0eb' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Line Chart (intensity: 1=distracted, 2=moderate, 3=focused, 4=deep)
+    new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+            labels: ['Mar 1','Mar 5','Mar 10','Mar 15','Mar 20','Mar 25'],
+            datasets: [{
+                data: [2, 3, 2, 3, 4, 3],
+                borderColor: '#c97d20',
+                backgroundColor: 'rgba(232,160,69,0.1)',
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#e8a045',
+            }]
+        },
+        options: {
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    min: 1, max: 4,
+                    ticks: { callback: v => ['','Distracted','Moderate','Focused','Deep'][v] },
+                    grid: { color: '#f5f0eb' }
+                },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+
+    // Heatmap (random sample data)
+    const heatmap = document.getElementById('heatmap');
+    const levels = ['', 'l1', 'l2', 'l3', 'l4'];
+    for (let w = 0; w < 26; w++) {
+        const col = document.createElement('div');
+        col.className = 'heatmap-col';
+        for (let d = 0; d < 7; d++) {
+            const cell = document.createElement('div');
+            const rand = Math.random();
+            const lvl = rand < 0.2 ? 0 : rand < 0.45 ? 1 : rand < 0.7 ? 2 : rand < 0.88 ? 3 : 4;
+            cell.className = 'heatmap-cell ' + levels[lvl];
+            col.appendChild(cell);
+        }
+        heatmap.appendChild(col);
+    }
+</script>
+</body>
+</html>

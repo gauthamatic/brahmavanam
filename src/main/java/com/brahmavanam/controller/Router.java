@@ -51,6 +51,13 @@ public class Router {
         return "home"; // Return home page
     }
 
+    @GetMapping("/sadhana")
+    public String sadhana(HttpSession session, Model model) {
+        UserDTO userDTO = getUser(session);
+        if (userDTO != null) model.addAttribute("userName", userDTO.getFirstName());
+        return "sadhana";
+    }
+
     @GetMapping("/namana")
     public RedirectView namana(){
         String wordpressUrl = "https://brahmavanam.wordpress.com/%E0%B2%A8%E0%B2%AE%E0%B2%A8/";
