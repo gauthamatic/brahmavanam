@@ -17,10 +17,18 @@ public class JapaTargetService {
 
     public JapaTargetDTO setTarget(int userId, JapaTargetDTO dto) {
         if (dto.getTargetMalas() <= 0) throw new IllegalArgumentException("Target malas must be greater than 0.");
-        JapaTarget target = new JapaTarget();
+        LocalDate effectiveFrom = dto.getEffectiveFrom() != null ? dto.getEffectiveFrom() : LocalDate.now();
+
+        // If a target already exists for the same effectiveFrom date, update it instead of inserting
+        Optional<JapaTarget> existing = japaTargetRepository
+                .findTopByUserIdAndEffectiveFromLessThanEqualOrderByEffectiveFromDesc(userId, effectiveFrom);
+
+        JapaTarget target = existing.filter(t -> t.getEffectiveFrom().equals(effectiveFrom))
+                .orElse(new JapaTarget());
+
         target.setUserId(userId);
         target.setTargetMalas(dto.getTargetMalas());
-        target.setEffectiveFrom(dto.getEffectiveFrom() != null ? dto.getEffectiveFrom() : LocalDate.now());
+        target.setEffectiveFrom(effectiveFrom);
         return toDTO(japaTargetRepository.save(target));
     }
 

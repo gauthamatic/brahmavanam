@@ -347,6 +347,7 @@
         });
         document.getElementById('targetMsg').textContent = 'Target updated!';
         setTimeout(() => document.getElementById('targetMsg').textContent = '', 2000);
+        await loadTarget();
         await loadDashboard(7);
     }
 
@@ -357,8 +358,20 @@
         const duration = parseInt(document.getElementById('duration').value);
         const loggedAt = document.getElementById('loggedAt').value;
 
-        if (!malas || malas <= 0 || !intensity || !duration || duration <= 0 || !loggedAt) {
-            document.getElementById('logError').textContent = 'All fields are required. Malas and Duration must be greater than 0.';
+        if (!malas || malas <= 0) {
+            document.getElementById('logError').textContent = 'Please enter a valid number of Malas (greater than 0).';
+            return;
+        }
+        if (!intensity) {
+            document.getElementById('logError').textContent = 'Please select Intensity.';
+            return;
+        }
+        if (!duration || duration <= 0) {
+            document.getElementById('logError').textContent = 'Please enter a valid Duration (greater than 0).';
+            return;
+        }
+        if (!loggedAt) {
+            document.getElementById('logError').textContent = 'Please select a Time.';
             return;
         }
 
