@@ -43,7 +43,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "$EC2_SSH_KEY" > ec2_key.pem
+          printf '%s\n' "$EC2_SSH_KEY" > ec2_key.pem
           chmod 600 ec2_key.pem
           scp -i ec2_key.pem -o StrictHostKeyChecking=no \
             build/libs/${{ env.JAR_NAME }} \
@@ -59,7 +59,7 @@ jobs:
           EC2_USER: ${{ secrets.EC2_USER }}
           EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          echo "$EC2_SSH_KEY" > ec2_key.pem
+          printf '%s\n' "$EC2_SSH_KEY" > ec2_key.pem
           chmod 600 ec2_key.pem
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST << 'EOF'
             sudo systemctl restart brahmavanam.service
