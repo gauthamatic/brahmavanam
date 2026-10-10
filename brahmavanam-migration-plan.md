@@ -297,4 +297,113 @@ Before migration, the following backups have been secured:
 ---
 
 *Document prepared with assistance from Kiro AI on August 2, 2026.*  
-*Last updated: September 20, 2026 — Cloudflare DNS active, nginx setup pending.*
+*Last updated: October 10, 2026 — Oracle Cloud abandoned, migrated to AWS EC2. Site fully live.*
+
+---
+
+## 11. Oracle Cloud Failure & Final Migration to AWS EC2 (Oct 10, 2026)
+
+### What Happened to Oracle Cloud
+
+The Oracle Cloud Always Free VM (`140.245.255.20`) was reclaimed without warning — a known issue with Oracle's AMD E2.1.Micro shape where Oracle silently terminates free VMs when datacenter capacity is needed. The app went down and the VM was unrecoverable.
+
+### Decision: Move to AWS EC2 (Permanently)
+
+Rather than fight unreliable free tiers, the decision was made to run on a proper AWS EC2 instance with a right-sized, cost-optimized setup. At 50–100 hits/week, a t3.small is more than sufficient and reliable.
+
+See `hosting-recommendation.md` for the full options analysis.
+
+---
+
+### What Was Done (Oct 10, 2026)
+
+#### Step 1 — Allocate Elastic IP
+- Allocated Elastic IP **`18.60.183.229`** via AWS Console
+- Attached to instance `i-0bda66782097a1877`
+- IP is now permanent — survives all reboots
+
+#### Step 2 — Remove Oracle DB
+- Stopped and deleted Oracle DB 23c instance
+- Removed Oracle RPM package (`oracle-database-free-23c`)
+- Cleaned up `/opt/oracle` — freed ~9GB disk space (30GB disk now at 29% used)
+
+#### Step 3 — Install Java 17 + MySQL 8
+- Installed **Amazon Corretto Java 17** (`java-17-amazon-corretto-headless`)
+- Installed **MySQL 8.4.11** Community Server
+- MySQL enabled on boot, running on port 3306
+
+#### Step 4 — Restore Database
+- Created database `brahmavanam` with user `admin`
+- Restored from `brahmavanam_backup_fresh.sql`
+- Verified: **126 events**, **34 users** restored successfully
+
+#### Step 5 — Deploy App as systemd Service
+- Copied `application-cloud.properties` to `jar/` directory
+- Updated DB URL from old IP `172.31.9.195` → `localhost`
+- Created `/etc/systemd/system/brahmavanam.service`
+  - Starts after MySQL (`Requires=mysqld.service`)
+  - Auto-restarts on failure (`Restart=on-failure`)
+  - Enabled on boot
+- App running on port 8080 ✅
+
+#### Step 6 — Install nginx
+- Installed nginx, configured reverse proxy: port 80 → localhost:8080
+- Config at `/etc/nginx/conf.d/brahmavanam.conf`
+- nginx enabled on boot
+
+#### Step 7 — Memory Protection
+- 4GB swap file already present and active
+- Set `vm.swappiness=10` permanently in `/etc/sysctl.conf`
+- Prevents EC2 from hanging under memory pressure
+
+#### Step 8 — Cloudflare DNS Updated
+- Updated A record: `brahmavanam.org → 18.60.183.229`
+- Cloudflare proxy (orange cloud) enabled — free SSL + DDoS protection
+- DNS propagated successfully
+
+#### Step 9 — Site Verified Live
+- `http://brahmavanam.org` → HTTP 200 ✅
+- `https://brahmavanam.org` → HTTP 200 ✅
+
+---
+
+### Final Infrastructure (Oct 10, 2026)
+
+| Resource | Value |
+|---|---|
+| EC2 Instance | `i-0bda66782097a1877` |
+| Instance Type | t3.small (2 vCPU, 2GB RAM) |
+| Region | ap-south-2 (Hyderabad) |
+| Elastic IP | `18.60.183.229` (permanent) |
+| OS | Amazon Linux 2023 |
+| Java | Amazon Corretto 17.0.20.1 |
+| MySQL | 8.4.11 Community |
+| App Port | 8080 (behind nginx on port 80) |
+| Systemd Services | `mysqld`, `brahmavanam`, `nginx` (all enabled) |
+| Swap | 4GB (`/swapfile`), swappiness=10 |
+| Domain Registrar | Namecheap |
+| Domain Expiry | March 27, 2028 |
+| DNS | Cloudflare (proxy enabled, free SSL) |
+| SSH Key | `~/.ssh/brahmavanam-key.pem` |
+
+### Ongoing Costs
+
+| Item | Cost |
+|---|---|
+| EC2 t3.small | ~₹1,500/month (or ₹0 under free tier) |
+| EBS 30GB | ~₹200/month |
+| Elastic IP (attached) | ₹0 |
+| Cloudflare DNS + SSL | ₹0 |
+| Domain renewal | ~₹900/year |
+
+### Reboot Safety
+
+| Scenario | Data Safe? |
+|---|---|
+| EC2 reboot | ✅ Yes — EBS persists, all services auto-start |
+| EC2 stop → start | ✅ Yes — Elastic IP stays attached |
+| EC2 terminate (delete) | ⚠️ Data lost unless EBS retained manually |
+
+### Pending
+- [ ] Set up automated daily MySQL backup (cron job)
+- [ ] Verify bookings, login, calendar end-to-end on live site
