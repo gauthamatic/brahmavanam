@@ -273,14 +273,13 @@
           <td th:text="${event.user != null ? event.user.firstname + ' ' + event.user.lastname : '—'}"></td>
           <td>
             <button class="btn-edit"
-                    th:onclick="|openEditModal(
-                      ${event.id},
-                      '[[${event.title}]]',
-                      '[[${event.startDate}]]',
-                      '[[${event.endDate}]]',
-                      '[[${event.color}]]',
-                      '[[${event.textColor}]]'
-                    )|">
+                    onclick="openEditModal(this)"
+                    th:attr="data-id=${event.id},
+                             data-title=${event.title},
+                             data-start=${event.startDate},
+                             data-end=${event.endDate},
+                             data-color=${event.color},
+                             data-textcolor=${event.textColor}">
               Edit
             </button>
             <form action="#" th:action="@{/admin/event/delete/{id}(id=${event.id})}" method="post" style="display:inline"
@@ -363,13 +362,13 @@
 </div>
 
 <script>
-  function openEditModal(id, title, startDate, endDate, color, textColor) {
-    document.getElementById('editId').value = id;
-    document.getElementById('editTitle').value = title;
-    document.getElementById('editStartDate').value = startDate;
-    document.getElementById('editEndDate').value = endDate;
-    document.getElementById('editColor').value = color || '#ffcccc';
-    document.getElementById('editTextColor').value = textColor || '#990000';
+  function openEditModal(btn) {
+    document.getElementById('editId').value = btn.dataset.id;
+    document.getElementById('editTitle').value = btn.dataset.title;
+    document.getElementById('editStartDate').value = btn.dataset.start;
+    document.getElementById('editEndDate').value = btn.dataset.end;
+    document.getElementById('editColor').value = btn.dataset.color || '#ffcccc';
+    document.getElementById('editTextColor').value = btn.dataset.textcolor || '#990000';
     document.getElementById('editModal').classList.add('active');
   }
 
