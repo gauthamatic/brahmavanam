@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard — Brahmavanam</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, sans-serif; background: #f4f4f9; color: #333; }
+
+    header {
+      background: #c0392b;
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header h1 { font-size: 20px; }
+    header a {
+      color: white;
+      text-decoration: none;
+      font-size: 14px;
+      background: rgba(255,255,255,0.2);
+      padding: 6px 14px;
+      border-radius: 4px;
+    }
+    header a:hover { background: rgba(255,255,255,0.35); }
+
+    .container { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+
+    .flash {
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 18px;
+      font-size: 14px;
+    }
+    .flash.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+    .flash.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      margin-bottom: 28px;
+      padding: 20px 24px;
+    }
+    .card h2 {
+      font-size: 17px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid #f0f0f0;
+      padding-bottom: 8px;
+      color: #c0392b;
+    }
+
+    /* Create Event Form */
+    .event-form {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr 1fr auto;
+      gap: 10px;
+      align-items: end;
+    }
+    .event-form label { font-size: 12px; color: #666; display: block; margin-bottom: 3px; }
+    .event-form input[type="text"],
+    .event-form input[type="date"],
+    .event-form input[type="color"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .event-form input[type="color"] { height: 36px; padding: 2px 4px; cursor: pointer; }
+    .btn-primary {
+      background: #c0392b;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: #a93226; }
+
+    /* Tables */
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { background: #f8f8f8; }
+    th { padding: 10px 12px; text-align: left; font-weight: 600; border-bottom: 2px solid #e0e0e0; color: #555; }
+    td { padding: 9px 12px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+    tr:hover td { background: #fafafa; }
+
+    .color-dot {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      border: 1px solid #ccc;
+    }
+
+    .btn-edit {
+      background: #2980b9;
+      color: white;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      margin-right: 4px;
+    }
+    .btn-edit:hover { background: #2471a3; }
+
+    .btn-delete {
+      background: #e74c3c;
+      color: white;
+      border: none;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .btn-delete:hover { background: #c0392b; }
+
+    /* Edit modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 10px;
+      padding: 28px;
+      width: 480px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+    .modal h3 { margin-bottom: 18px; color: #c0392b; }
+    .modal .form-group { margin-bottom: 14px; }
+    .modal label { font-size: 13px; color: #555; display: block; margin-bottom: 4px; }
+    .modal input[type="text"],
+    .modal input[type="date"] {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+    .modal .color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .modal input[type="color"] { width: 100%; height: 38px; padding: 2px 4px; border: 1px solid #ccc; border-radius: 5px; cursor: pointer; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel {
+      background: #95a5a6;
+      color: white;
+      border: none;
+      padding: 8px 18px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .btn-cancel:hover { background: #7f8c8d; }
+
+    .stats-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .stat-box {
+      background: white;
+      border-radius: 8px;
+      padding: 14px 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      flex: 1;
+      text-align: center;
+    }
+    .stat-box .number { font-size: 28px; font-weight: bold; color: #c0392b; }
+    .stat-box .label { font-size: 13px; color: #888; margin-top: 4px; }
+
+    @media (max-width: 768px) {
+      .event-form { grid-template-columns: 1fr 1fr; }
+      .stats-bar { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🛕 Brahmavanam Admin</h1>
+  <a href="/admin/logout">Logout</a>
+</header>
+
+<div class="container">
+
+  <!-- Flash messages -->
+  <div th:if="${success}" class="flash success" th:text="${success}"></div>
+  <div th:if="${error}"   class="flash error"   th:text="${error}"></div>
+
+  <!-- Stats bar -->
+  <div class="stats-bar">
+    <div class="stat-box">
+      <div class="number" th:text="${#lists.size(events)}">0</div>
+      <div class="label">Total Events</div>
+    </div>
+    <div class="stat-box">
+      <div class="number" th:text="${#lists.size(users)}">0</div>
+      <div class="label">Registered Users</div>
+    </div>
+  </div>
+
+  <!-- Create New Event -->
+  <div class="card">
+    <h2>➕ Create New Event</h2>
+    <form action="/admin/event/save" method="post" class="event-form">
+      <div>
+        <label>Title</label>
+        <input type="text" name="title" placeholder="e.g. Gowtham Govind" required>
+      </div>
+      <div>
+        <label>Start Date</label>
+        <input type="date" name="startDate" required>
+      </div>
+      <div>
+        <label>End Date</label>
+        <input type="date" name="endDate" required>
+      </div>
+      <div>
+        <label>Bg Color</label>
+        <input type="color" name="color" value="#ffcccc">
+      </div>
+      <div>
+        <label>Text Color</label>
+        <input type="color" name="textColor" value="#990000">
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button type="submit" class="btn-primary">Create</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Events Table -->
+  <div class="card">
+    <h2>📅 All Events (<span th:text="${#lists.size(events)}">0</span>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Color</th>
+          <th>User</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="event : ${events}">
+          <td th:text="${event.id}"></td>
+          <td th:text="${event.title}"></td>
+          <td th:text="${event.startDate}"></td>
+          <td th:text="${event.endDate}"></td>
+          <td>
+            <span class="color-dot" th:style="'background-color:' + ${event.color}"></span>
+            <span th:text="${event.color}"></span>
+          </td>
+          <td th:text="${event.user != null ? event.user.firstname + ' ' + event.user.lastname : '—'}"></td>
+          <td>
+            <button class="btn-edit"
+                    th:onclick="|openEditModal(
+                      ${event.id},
+                      '[[${event.title}]]',
+                      '[[${event.startDate}]]',
+                      '[[${event.endDate}]]',
+                      '[[${event.color}]]',
+                      '[[${event.textColor}]]'
+                    )|">
+              Edit
+            </button>
+            <form action="#" th:action="@{/admin/event/delete/{id}(id=${event.id})}" method="post" style="display:inline"
+                  onsubmit="return confirm('Delete this event?')">
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Users Table -->
+  <div class="card">
+    <h2>👤 All Users (<span th:text="${#lists.size(users)}">0</span>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="user : ${users}">
+          <td th:text="${user.id}"></td>
+          <td th:text="${user.firstname}"></td>
+          <td th:text="${user.lastname}"></td>
+          <td th:text="${user.emailId}"></td>
+          <td>
+            <form action="#" th:action="@{/admin/user/delete/{id}(id=${user.id})}" method="post" style="display:inline"
+                  onsubmit="return confirm('Delete user ' + this.dataset.name + '? This will NOT delete their events.');"
+                  th:data-name="${user.firstname + ' ' + user.lastname}">
+              <button type="submit" class="btn-delete">Delete</button>
+            </form>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Edit Event Modal -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <h3>✏️ Edit Event</h3>
+    <form action="/admin/event/save" method="post">
+      <input type="hidden" name="id" id="editId">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" name="title" id="editTitle" required>
+      </div>
+      <div class="form-group">
+        <label>Start Date (YYYY-MM-DD)</label>
+        <input type="text" name="startDate" id="editStartDate" placeholder="e.g. 2026-11-01T00:00:00.000Z" required>
+      </div>
+      <div class="form-group">
+        <label>End Date (YYYY-MM-DD)</label>
+        <input type="text" name="endDate" id="editEndDate" placeholder="e.g. 2026-11-03T00:00:00.000Z" required>
+      </div>
+      <div class="form-group color-row">
+        <div>
+          <label>Background Color</label>
+          <input type="color" name="color" id="editColor">
+        </div>
+        <div>
+          <label>Text Color</label>
+          <input type="color" name="textColor" id="editTextColor">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+        <button type="submit" class="btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  function openEditModal(id, title, startDate, endDate, color, textColor) {
+    document.getElementById('editId').value = id;
+    document.getElementById('editTitle').value = title;
+    document.getElementById('editStartDate').value = startDate;
+    document.getElementById('editEndDate').value = endDate;
+    document.getElementById('editColor').value = color || '#ffcccc';
+    document.getElementById('editTextColor').value = textColor || '#990000';
+    document.getElementById('editModal').classList.add('active');
+  }
+
+  function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+  }
+
+  // Close modal on overlay click
+  document.getElementById('editModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditModal();
+  });
+
+  // Auto-format date inputs in create form: convert YYYY-MM-DD to ISO string
+  document.querySelector('.event-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const startInput = this.querySelector('input[name="startDate"]');
+    const endInput = this.querySelector('input[name="endDate"]');
+    if (startInput.value && !startInput.value.includes('T')) {
+      startInput.value = startInput.value + 'T00:00:00.000Z';
+    }
+    if (endInput.value && !endInput.value.includes('T')) {
+      endInput.value = endInput.value + 'T00:00:00.000Z';
+    }
+    this.submit();
+  });
+</script>
+
+</body>
+</html>
