@@ -267,7 +267,7 @@
           <td th:text="${event.startDate}"></td>
           <td th:text="${event.endDate}"></td>
           <td>
-            <span class="color-dot" th:style="'background-color:' + ${event.color}"></span>
+            <span class="color-dot" th:style="|background-color:${event.color}|"></span>
             <span th:text="${event.color}"></span>
           </td>
           <td th:text="${event.user != null ? event.user.firstname + ' ' + event.user.lastname : '—'}"></td>
