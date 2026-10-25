@@ -183,6 +183,21 @@
     .stat-box .number { font-size: 28px; font-weight: bold; color: #c0392b; }
     .stat-box .label { font-size: 13px; color: #888; margin-top: 4px; }
 
+    .sort-icon { font-size: 11px; color: #aaa; }
+    th:hover .sort-icon { color: #c0392b; }
+    .sort-icon.asc::after { content: ' ▲'; color: #c0392b; }
+    .sort-icon.desc::after { content: ' ▼'; color: #c0392b; }
+    .page-btn {
+      padding: 5px 11px;
+      border: 1px solid #ddd;
+      background: white;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .page-btn:hover { background: #f0f0f0; }
+    .page-btn.active { background: #c0392b; color: white; border-color: #c0392b; }
+
     @media (max-width: 768px) {
       .event-form { grid-template-columns: 1fr 1fr; }
       .stats-bar { flex-direction: column; }
@@ -247,49 +262,67 @@
 
   <!-- Events Table -->
   <div class="card">
-    <h2>📅 All Events (<span th:text="${#lists.size(events)}">0</span>)</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Title</th>
-          <th>Start Date</th>
-          <th>End Date</th>
-          <th>Color</th>
-          <th>User</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr th:each="event : ${events}">
-          <td th:text="${event.id}"></td>
-          <td th:text="${event.title}"></td>
-          <td th:text="${event.startDate}"></td>
-          <td th:text="${event.endDate}"></td>
-          <td>
-            <span class="color-dot" th:style="|background-color:${event.color}|"></span>
-            <span th:text="${event.color}"></span>
-          </td>
-          <td th:text="${event.user != null ? event.user.firstname + ' ' + event.user.lastname : '—'}"></td>
-          <td>
-            <button class="btn-edit"
-                    onclick="openEditModal(this)"
-                    th:attr="data-id=${event.id},
-                             data-title=${event.title},
-                             data-start=${event.startDate},
-                             data-end=${event.endDate},
-                             data-color=${event.color},
-                             data-textcolor=${event.textColor}">
-              Edit
-            </button>
-            <form action="#" th:action="@{/admin/event/delete/{id}(id=${event.id})}" method="post" style="display:inline"
-                  onsubmit="return confirm('Delete this event?')">
-              <button type="submit" class="btn-delete">Delete</button>
-            </form>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:10px;">
+      <h2 style="margin:0;">📅 All Events (<span id="eventTotalCount" th:text="${#lists.size(events)}">0</span>)</h2>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <label style="font-size:13px; color:#666;">Show
+          <select id="rowsPerPage" onchange="renderEventTable()" style="margin:0 4px; padding:4px 8px; border:1px solid #ccc; border-radius:4px; font-size:13px;">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+            <option value="99999">All</option>
+          </select>
+          rows
+        </label>
+        <span id="eventCountDisplay" style="font-size:13px; color:#888;"></span>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table id="eventsTable">
+        <thead>
+          <tr>
+            <th onclick="sortEventTable(0)" style="cursor:pointer; user-select:none;">ID <span class="sort-icon" id="sort-0">↕</span></th>
+            <th onclick="sortEventTable(1)" style="cursor:pointer; user-select:none;">Title <span class="sort-icon" id="sort-1">↕</span></th>
+            <th onclick="sortEventTable(2)" style="cursor:pointer; user-select:none;">Start Date <span class="sort-icon" id="sort-2">↕</span></th>
+            <th onclick="sortEventTable(3)" style="cursor:pointer; user-select:none;">End Date <span class="sort-icon" id="sort-3">↕</span></th>
+            <th>Color</th>
+            <th onclick="sortEventTable(5)" style="cursor:pointer; user-select:none;">User <span class="sort-icon" id="sort-5">↕</span></th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="eventsTableBody">
+          <tr th:each="event : ${events}">
+            <td th:text="${event.id}"></td>
+            <td th:text="${event.title}"></td>
+            <td th:text="${event.startDate}"></td>
+            <td th:text="${event.endDate}"></td>
+            <td>
+              <span class="color-dot" th:style="|background-color:${event.color}|"></span>
+              <span th:text="${event.color}"></span>
+            </td>
+            <td th:text="${event.user != null ? event.user.firstname + ' ' + event.user.lastname : '—'}"></td>
+            <td>
+              <button class="btn-edit"
+                      onclick="openEditModal(this)"
+                      th:attr="data-id=${event.id},
+                               data-title=${event.title},
+                               data-start=${event.startDate},
+                               data-end=${event.endDate},
+                               data-color=${event.color},
+                               data-textcolor=${event.textColor}">
+                Edit
+              </button>
+              <form action="#" th:action="@{/admin/event/delete/{id}(id=${event.id})}" method="post" style="display:inline"
+                    onsubmit="return confirm('Delete this event?')">
+                <button type="submit" class="btn-delete">Delete</button>
+              </form>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="eventPagination" style="display:flex; justify-content:center; align-items:center; gap:6px; margin-top:14px; flex-wrap:wrap;"></div>
   </div>
 
   <!-- Users Table -->
@@ -362,6 +395,107 @@
 </div>
 
 <script>
+  // ── Sorting & Pagination ─────────────────────────────────────────────────
+  let allRows = [];
+  let currentPage = 1;
+  let sortCol = 2;      // default sort: Start Date
+  let sortAsc = true;
+
+  function initEventTable() {
+    const tbody = document.getElementById('eventsTableBody');
+    allRows = Array.from(tbody.querySelectorAll('tr'));
+    sortEventTable(2); // default sort by start date ascending
+  }
+
+  function sortEventTable(col) {
+    // Toggle direction if same column clicked
+    if (sortCol === col) {
+      sortAsc = !sortAsc;
+    } else {
+      sortCol = col;
+      sortAsc = true;
+    }
+
+    // Reset all sort icons
+    document.querySelectorAll('.sort-icon').forEach(el => {
+      el.className = 'sort-icon';
+      el.textContent = '↕';
+    });
+    const icon = document.getElementById('sort-' + col);
+    if (icon) {
+      icon.className = 'sort-icon ' + (sortAsc ? 'asc' : 'desc');
+      icon.textContent = '';
+    }
+
+    allRows.sort((a, b) => {
+      const aText = (a.cells[col] ? a.cells[col].textContent : '').trim();
+      const bText = (b.cells[col] ? b.cells[col].textContent : '').trim();
+      // Numeric sort for ID column
+      if (col === 0) {
+        return sortAsc ? (parseInt(aText) - parseInt(bText)) : (parseInt(bText) - parseInt(aText));
+      }
+      return sortAsc ? aText.localeCompare(bText) : bText.localeCompare(aText);
+    });
+
+    currentPage = 1;
+    renderEventTable();
+  }
+
+  function renderEventTable() {
+    const rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+    const tbody = document.getElementById('eventsTableBody');
+    const totalRows = allRows.length;
+    const totalPages = Math.ceil(totalRows / rowsPerPage);
+
+    if (currentPage > totalPages) currentPage = 1;
+
+    const start = (currentPage - 1) * rowsPerPage;
+    const end = Math.min(start + rowsPerPage, totalRows);
+
+    // Clear and re-add only visible rows
+    tbody.innerHTML = '';
+    for (let i = start; i < end; i++) {
+      tbody.appendChild(allRows[i]);
+    }
+
+    // Update count display
+    document.getElementById('eventCountDisplay').textContent =
+      totalRows > rowsPerPage ? `Showing ${start + 1}–${end} of ${totalRows}` : `${totalRows} events`;
+
+    // Render pagination buttons
+    renderPagination(totalPages, rowsPerPage);
+  }
+
+  function renderPagination(totalPages, rowsPerPage) {
+    const container = document.getElementById('eventPagination');
+    container.innerHTML = '';
+    if (totalPages <= 1) return;
+
+    const addBtn = (label, page, isActive) => {
+      const btn = document.createElement('button');
+      btn.className = 'page-btn' + (isActive ? ' active' : '');
+      btn.textContent = label;
+      btn.disabled = isActive;
+      btn.onclick = () => { currentPage = page; renderEventTable(); };
+      container.appendChild(btn);
+    };
+
+    addBtn('«', 1, false);
+    addBtn('‹', Math.max(1, currentPage - 1), false);
+
+    // Show pages around current
+    const delta = 2;
+    for (let i = Math.max(1, currentPage - delta); i <= Math.min(totalPages, currentPage + delta); i++) {
+      addBtn(i, i, i === currentPage);
+    }
+
+    addBtn('›', Math.min(totalPages, currentPage + 1), false);
+    addBtn('»', totalPages, false);
+  }
+
+  // Initialise on page load
+  document.addEventListener('DOMContentLoaded', initEventTable);
+
   function openEditModal(btn) {
     document.getElementById('editId').value = btn.dataset.id;
     document.getElementById('editTitle').value = btn.dataset.title;
